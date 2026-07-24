@@ -1,0 +1,51 @@
+name: Agent evaluation
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Unit tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run tests
+        run: python -m unittest discover -s tests
+
+  scope-check:
+    name: Sensitive file scope check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: List changed files
+        run: |
+          git fetch origin "${{ github.base_ref }}" --depth=1
+          git diff --name-only "origin/${{ github.base_ref }}"...HEAD | tee changed-files.txt
+
+      - name: Flag sensitive paths
+        run: |
+          if grep -E '^(\.github/|agents/|policies/|tools/)' changed-files.txt; then
+            echo "Sensitive paths changed. Confirm CODEOWNER review is required."
+          else
+            echo "No sensitive paths changed."
+          fi
+

@@ -1,0 +1,39 @@
+{
+  "description": "Example MCP allow-list design for GH-600 lab discussions. Adjust to your organization policy before use.",
+  "servers": [
+    {
+      "name": "github",
+      "allowedTools": [
+        "repos.read",
+        "issues.read",
+        "pull_requests.read",
+        "actions.logs.read"
+      ],
+      "requiresHumanApproval": [
+        "issues.comment.write",
+        "pull_requests.create",
+        "branches.create"
+      ],
+      "deniedTools": [
+        "secrets.read",
+        "environments.approve",
+        "pull_requests.merge",
+        "rulesets.write"
+      ]
+    },
+    {
+      "name": "project-tracker",
+      "allowedTools": [
+        "work_items.read"
+      ],
+      "requiresHumanApproval": [
+        "work_items.comment.write"
+      ],
+      "deniedTools": [
+        "work_items.delete",
+        "admin.write"
+      ]
+    }
+  ]
+}
+

@@ -1,0 +1,10 @@
+# Governance and automation controls
+.github/ @platform-owners
+agents/ @platform-owners
+policies/ @security-owners
+tools/ @platform-owners
+
+# Application ownership
+app/ @app-owners
+tests/ @app-owners
+
