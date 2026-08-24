@@ -15,7 +15,7 @@ The agent needs access to repository files, GitHub issues, pull requests, and CI
 
 ### 1. Build a tool inventory
 
-Create `artifacts/tool-inventory.md` with this table:
+Create `artifacts/submissions/tool-inventory.md` with this table:
 
 | Tool | Purpose | Required permission | Risk | Allowed for autonomous use? |
 | --- | --- | --- | --- | --- |
@@ -35,7 +35,7 @@ Include at least:
 
 Review `tools/mcp.allow-list.example.json`.
 
-Create `artifacts/mcp-allow-list-decision.md` and decide:
+Create `artifacts/submissions/mcp-allow-list-decision.md` and decide:
 
 - Which tools should be allowed
 - Which tools should be denied
@@ -55,7 +55,7 @@ Update `templates/agent-task-brief.md` with boundaries for:
 
 ### 4. Add robust error paths
 
-Create `artifacts/error-handling-runbook.md` covering:
+Create `artifacts/submissions/error-handling-runbook.md` covering:
 
 - Retryable failures
 - Non-retryable failures

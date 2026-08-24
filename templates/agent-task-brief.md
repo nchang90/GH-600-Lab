@@ -18,9 +18,27 @@
 
 ## Security constraints
 
+## Sensitive path handling
+
+## Execution boundaries
+
+### Repository scope
+
+### Branch scope
+
+### Workflow scope
+
+### Runner environment
+
+### Network access
+
+### Secrets and variables
+
 ## Validation commands
 
 ## Required artifacts
+
+## Resume and context check
 
 ## Approval gate
 

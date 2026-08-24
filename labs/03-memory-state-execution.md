@@ -14,7 +14,7 @@ An agent works on a task for multiple days. During the task, a developer changes
 
 ### 1. Create a memory policy
 
-Create `artifacts/memory-policy.md` with sections for:
+Create `artifacts/submissions/memory-policy.md` with sections for:
 
 - Short-term memory
 - Long-term repository facts
@@ -27,7 +27,7 @@ Use the official concept that repository-level facts should be scoped to the rep
 
 ### 2. Persist task state
 
-Create `artifacts/task-state-loyalty-discount.md` with:
+Create `artifacts/submissions/task-state-loyalty-discount.md` with:
 
 ```markdown
 # Task State: Loyalty Discount
@@ -49,7 +49,7 @@ Create `artifacts/task-state-loyalty-discount.md` with:
 
 ### 3. Detect context drift
 
-Read `artifacts/sample-architecture-change.md`.
+Read `artifacts/inputs/sample-architecture-change.md`.
 
 Add a `Context drift check` section to your task state artifact. Include:
 
@@ -59,7 +59,7 @@ Add a `Context drift check` section to your task state artifact. Include:
 
 ### 4. Share state safely
 
-Write a short handoff note in `artifacts/handoff-note.md` for a second agent that will review the implementation. Include only task-relevant context.
+Write a short handoff note in `artifacts/submissions/handoff-note.md` for a second agent that will review the implementation. Include only task-relevant context.
 
 ## Self-check
 

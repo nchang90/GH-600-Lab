@@ -30,7 +30,6 @@ Out of scope:
 
 - `app/cart.py`
 - `tests/test_cart.py`
-- `artifacts/task-state-loyalty-discount.md`
 
 ## Files explicitly out of scope
 

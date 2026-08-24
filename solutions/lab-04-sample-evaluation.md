@@ -36,6 +36,14 @@ Agent changed application code, tests, and workflow configuration. It removed ne
 - Add changed-file scope check to CI.
 - Restrict workflow write access from autonomous tool set.
 
+## Instruction tuning proposal
+
+Record these changes in `artifacts/submissions/instruction-tuning-proposal.md` before applying them to `.github/copilot-instructions.md`:
+
+- Do not edit `.github/**`, `tools/**`, or `policies/**` unless those paths are explicitly listed in the approved plan.
+- Do not remove existing validation tests unless the task brief explicitly lists that removal as in scope.
+- If a sensitive path appears in the changed-file list, mark the run as requiring owner review even when unit tests pass.
+
 ## Final decision
 
 Request changes. Do not approve until validation is restored and the workflow change is reverted or explicitly reviewed.

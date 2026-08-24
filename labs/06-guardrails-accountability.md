@@ -38,11 +38,11 @@ Use these levels:
 - Level 3: autonomous with required review
 - Level 4: human approval required before action
 
-### 2. Protect governance files
+### 2. Propose governance-file protection
 
 Review `.github/CODEOWNERS`.
 
-Add any missing paths that should require owner review, especially:
+Create `artifacts/submissions/codeowners-review-proposal.md` listing any missing paths that should require owner review, especially:
 
 - Copilot instructions
 - MCP configuration
@@ -50,9 +50,11 @@ Add any missing paths that should require owner review, especially:
 - Agent policy files
 - Custom agent definitions
 
+If you apply the proposal to `.github/CODEOWNERS` in a real repository, treat it as a sensitive-path change that requires platform-owner review before merge.
+
 ### 3. Design repository rules
 
-Create `artifacts/repository-ruleset-plan.md` with required rules for:
+Create `artifacts/submissions/repository-ruleset-plan.md` with required rules for:
 
 - Default branch protection
 - Required pull request reviews
@@ -63,7 +65,7 @@ Create `artifacts/repository-ruleset-plan.md` with required rules for:
 
 ### 4. Create an accountability checklist
 
-Create `artifacts/accountability-checklist.md` that a reviewer can use before approving an agent-created pull request.
+Create `artifacts/submissions/accountability-checklist.md` that a reviewer can use before approving an agent-created pull request.
 
 Include:
 

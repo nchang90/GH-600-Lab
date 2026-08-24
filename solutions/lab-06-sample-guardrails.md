@@ -1,4 +1,4 @@
-# Lab 06 Sample: Guardrails and Accountability
+# Lab 06 Guardrails and Accountability
 
 ## Autonomy matrix
 
@@ -24,6 +24,16 @@
 - Block force pushes to protected branches.
 - Require signed commits if organization policy requires them.
 - Require branches created by agents to use a recognizable prefix such as `agent/`.
+
+## CODEOWNERS review proposal
+
+Record these paths in `artifacts/submissions/codeowners-review-proposal.md` before applying them to `.github/CODEOWNERS`:
+
+- `.github/copilot-instructions.md` should require platform-owner review because it changes agent behavior.
+- `.github/workflows/**` should require platform-owner review because it controls automation permissions and checks.
+- `.github/agents/**` should require platform-owner review because it changes custom agent definitions.
+- `tools/**` should require platform-owner review because it controls MCP and external tool access.
+- `policies/**` should require security-owner review because it defines governance expectations.
 
 ## Accountability checklist
 

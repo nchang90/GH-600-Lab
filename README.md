@@ -10,6 +10,8 @@ You will use this folder as a mock production repository and gradually turn it i
 
 The starter application is a small cart pricing module in `app/cart.py` with tests in `tests/test_cart.py`.
 
+Start with the workbook guide: [labs/00-workbook-flow.md](labs/00-workbook-flow.md). It maps every lab to the artifacts you will create, the sample answer to compare against, and the sensitive-path rule used throughout the repository.
+
 Run tests locally:
 
 ```bash
@@ -55,6 +57,7 @@ If you do not have admin access, complete the design and file-based exercises lo
 
 | Official GH-600 skill area | Weight | Lab |
 | --- | ---: | --- |
+| Workbook flow and artifact map | N/A | [Lab 00](labs/00-workbook-flow.md) |
 | Prepare agent architecture and SDLC processes | 15-20% | [Lab 01](labs/01-agent-architecture-sdlc.md) |
 | Implement tool use and environment interaction | 20-25% | [Lab 02](labs/02-tools-mcp-environments.md) |
 | Manage memory, state, and execution | 10-15% | [Lab 03](labs/03-memory-state-execution.md) |
@@ -76,23 +79,25 @@ If you do not have admin access, complete the design and file-based exercises lo
 
 ## Best review order
 
-1. Complete the six labs.
-2. Compare your answers with `solutions/`.
-3. Complete `challenge-labs.md`.
-4. Complete `capstone.md`.
-5. Read `exam-cheatsheet.md`.
-6. Drill `flashcards.md`.
-7. Take `mock-exam.md` timed.
-8. Record your score in `readiness-tracker.md`.
-9. Revisit the official study guide for any missed domain.
+1. Read [labs/00-workbook-flow.md](labs/00-workbook-flow.md).
+2. Complete the six domain labs.
+3. Compare your answers with `solutions/`.
+4. Complete `challenge-labs.md`.
+5. Complete `capstone.md`.
+6. Read `exam-cheatsheet.md`.
+7. Drill `flashcards.md`.
+8. Take `mock-exam.md` timed.
+9. Record your score in `readiness-tracker.md`.
+10. Revisit the official study guide for any missed domain.
 
 ## How to use this lab
 
-1. Read each lab goal and exam focus.
+1. Read the workbook guide and the current lab's exam focus.
 2. Work in this folder as if it were a repository where agents operate.
-3. Create or update the requested artifacts.
+3. Create or update the requested learner artifacts under `artifacts/submissions/`.
 4. Use the self-check sections to verify your answer.
-5. If you have a test GitHub repository, push this folder and configure the repository settings described in each lab.
+5. Compare against the matching sample under `solutions/` after you finish.
+6. If you have a test GitHub repository, push this folder and configure the repository settings described in each lab.
 
 ## Practice scenarios
 

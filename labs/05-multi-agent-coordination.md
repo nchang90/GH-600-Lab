@@ -19,7 +19,7 @@ Your team wants three agents to work in parallel:
 
 ### 1. Choose an orchestration pattern
 
-Create `artifacts/multi-agent-orchestration.md`.
+Create `artifacts/submissions/multi-agent-orchestration.md`.
 
 Choose one pattern:
 

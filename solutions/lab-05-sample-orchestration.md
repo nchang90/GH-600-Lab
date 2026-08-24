@@ -14,7 +14,7 @@ Use a human-in-the-loop coordinator with sequential handoff:
 
 | Agent | Workspace | Allowed files | Tools | Stop condition |
 | --- | --- | --- | --- | --- |
-| Planner | Planning branch or artifact-only session | `artifacts/**` | Repo read | Plan complete or sensitive scope found |
+| Planner | Planning branch or artifact-only session | `artifacts/submissions/**` | Repo read | Plan complete or sensitive scope found |
 | Implementation | Feature branch | Approved app/test files | Repo read/write, test runner | Tests pass or blocked |
 | Reviewer | Read-only review context | None | Repo read, logs read | Report complete |
 

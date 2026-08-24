@@ -38,9 +38,11 @@ Add these details to your task brief:
 - Security constraints
 - Definition of done
 
+The completed task brief is your planning input; keep it with your Lab 01 work for review.
+
 ### 3. Create a structured plan
 
-Create a new file under `artifacts/` named `agent-plan-loyalty-discount.md`.
+Create `artifacts/submissions/agent-plan-loyalty-discount.md`.
 
 Use this structure:
 

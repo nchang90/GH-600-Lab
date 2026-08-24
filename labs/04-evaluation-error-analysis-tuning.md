@@ -14,7 +14,7 @@ An agent attempted to add loyalty discount support but failed CI and modified an
 
 ### 1. Define evaluation signals
 
-Open `templates/evaluation-report.md` and create `artifacts/evaluation-report-loyalty-discount.md`.
+Open `templates/evaluation-report.md` and create `artifacts/submissions/evaluation-report-loyalty-discount.md`.
 
 Include signals from:
 
@@ -28,7 +28,7 @@ Include signals from:
 
 ### 2. Analyze the failed run
 
-Read `artifacts/failed-agent-run.md`.
+Read `artifacts/inputs/failed-agent-run.md`.
 
 Classify each issue as one of:
 
@@ -39,15 +39,15 @@ Classify each issue as one of:
 - Governance issue
 - Test coverage issue
 
-### 3. Tune instructions
+### 3. Propose instruction tuning
 
-Update `.github/copilot-instructions.md` with two improvements that would prevent the failure.
+Create `artifacts/submissions/instruction-tuning-proposal.md` with two improvements that would prevent the failure.
 
-Do not add broad instructions like "be careful." Make the instructions measurable.
+Do not add broad instructions like "be careful." Make the instructions measurable. If you apply the proposal to `.github/copilot-instructions.md` in a real repository, treat that as a sensitive-path change and require reviewer attention.
 
 ### 4. Tune tool access
 
-Update `artifacts/mcp-allow-list-decision.md` or create it if you have not completed Lab 02. Explain which tool access should be changed and why.
+Update `artifacts/submissions/mcp-allow-list-decision.md` or create it if you have not completed Lab 02. Explain which tool access should be changed and why.
 
 ## Self-check
 
@@ -55,7 +55,7 @@ You completed the lab if you can explain:
 
 - Which signal detected each failure
 - Whether the root cause was reasoning, tools, context, environment, or governance
-- Which instruction changed
+- Which instruction change was proposed
 - Which tool permission changed
 - How you would know the next run improved
 
