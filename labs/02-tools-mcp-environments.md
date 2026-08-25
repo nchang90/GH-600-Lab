@@ -4,10 +4,10 @@
 
 **You will create:**
 
-- `artifacts/submissions/tool-inventory.md`
-- `artifacts/submissions/mcp-allow-list-decision.md`
+- `.github/submissions/tool-inventory.md`
+- `.github/submissions/mcp-allow-list-decision.md`
 - updates to `templates/agent-task-brief.md`
-- `artifacts/submissions/error-handling-runbook.md`
+- `.github/submissions/error-handling-runbook.md`
 
 **Time:** About 20 minutes
 
@@ -44,7 +44,7 @@ An allow-list says what exists. Boundaries say where it is safe to act. Evidence
 
 ## Step 1 - Build the tool inventory
 
-Create `artifacts/submissions/tool-inventory.md`.
+Create `.github/submissions/tool-inventory.md`.
 
 Use this table:
 

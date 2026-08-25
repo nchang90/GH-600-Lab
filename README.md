@@ -14,10 +14,11 @@ Official guide: https://learn.microsoft.com/en-gb/credentials/certifications/res
 
 - `app/` contains the small sample app used by the labs.
 - `labs/` contains the six lab instructions.
-- `templates/` contains the learner artifacts you fill in.
+- `.github/submissions/` contains the artifacts you create while doing the labs.
 - `solutions/` contains sample answers to review after you try the lab.
 - `.github/agents/` contains the lab guide agent.
 - `.github/skills/gh600-exam-coach/` contains the lab-only skill.
+- `templates/` contains starter files referenced by the labs.
 
 ## How to use
 

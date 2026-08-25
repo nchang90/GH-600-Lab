@@ -27,7 +27,7 @@
 
 ## CODEOWNERS review proposal
 
-Record these paths in `artifacts/submissions/codeowners-review-proposal.md` before applying them to `.github/CODEOWNERS`:
+Record these paths in `.github/submissions/codeowners-review-proposal.md` before applying them to `.github/CODEOWNERS`:
 
 - `.github/copilot-instructions.md` should require platform-owner review because it changes agent behavior.
 - `.github/workflows/**` should require platform-owner review because it controls automation permissions and checks.
