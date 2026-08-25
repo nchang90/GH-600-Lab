@@ -1,0 +1,17 @@
+{
+  "skill_name": "gh600-exam-coach",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Start the GH-600 lab with me.",
+      "expected_output": "Start Lab 01, briefly explain its purpose and required artifact, and present only the first task.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "I finished my Lab 02 tool inventory. Help me check it and continue.",
+      "expected_output": "Review the artifact against Lab 02's self-check, use the sample only after the attempt, and identify the next Lab 02 task.",
+      "files": []
+    }
+  ]
+}

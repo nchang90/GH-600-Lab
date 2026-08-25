@@ -1,93 +1,177 @@
-# Lab 01: Prepare Agent Architecture and SDLC Processes
+# Lab 01 - Prepare Agent Architecture (Domain 1)
 
-## Exam focus
+**Goal:** Give every agent that works in this repository a shared, written understanding of the repository, its working rules, and its safety boundaries.
 
-- Integrate agents into the SDLC.
-- Define inputs, outputs, and success criteria.
-- Separate planning, reasoning, and action.
-- Configure observability and control for autonomous agents.
+**You will create:** `.github/copilot-instructions.md`
 
-## Scenario
+**Time:** About 15 minutes
 
-Your team wants to let an agent implement small application changes in this repository. Before the agent can act, the team needs a repeatable task structure and a plan approval process.
+---
 
-## Tasks
+## Why this lab comes first
 
-### 1. Map agent responsibilities to SDLC stages
+An agent does not automatically know the purpose of this repository, which files are sensitive, or which test command is correct. If those facts are not written down, the agent must guess.
 
-Open `templates/agent-task-brief.md` and fill in a task for this change:
+Repository instructions provide durable context that every task can reuse. Because the instructions are stored in Git, they can also be reviewed, versioned, and corrected when agent behavior needs to change.
 
-> Add support for a 10 percent loyalty discount when a cart total is at least 100.00.
+---
 
-Classify which parts of the work belong to:
+## The architecture principle
 
-- Planning
-- Implementation
-- Validation
-- Review
-- Release
+Agent work should remain visible in the normal software development lifecycle:
 
-### 2. Define inputs, outputs, and success criteria
-
-Add these details to your task brief:
-
-- Input files the agent is allowed to edit
-- Files the agent must not edit
-- Expected code and test output
-- Operational constraints
-- Security constraints
-- Definition of done
-
-The completed task brief is your planning input; keep it with your Lab 01 work for review.
-
-### 3. Create a structured plan
-
-Create `artifacts/submissions/agent-plan-loyalty-discount.md`.
-
-Use this structure:
-
-```markdown
-# Agent Plan: Loyalty Discount
-
-## Intent
-
-## Scope
-
-## Proposed changes
-
-## Files expected to change
-
-## Files explicitly out of scope
-
-## Risks
-
-## Validation plan
-
-## Approval decision
+```text
+task -> plan -> branch -> pull request -> checks -> review -> merge
 ```
 
-The plan should be inspectable before any implementation occurs.
+Keep agent work inside this review chain. Do not treat a good prompt or a convincing plan as proof that a change is safe.
 
-### 4. Define action boundaries
+### Choose the lowest useful autonomy
 
-Update the `Approval decision` section with one of:
+| Level | Typical capabilities | Suitable work |
+| --- | --- | --- |
+| Low | Read and search | Explain, summarize, and review |
+| Medium | Read, search, edit, and test | Implement scoped code changes |
+| High | Coordinate agents or use external services | Controlled workflows with added approval |
 
-- `Approved for implementation`
-- `Planning only`
-- `Blocked pending human review`
+Grant only the capabilities required for the task.
 
-Justify the decision based on risk.
+---
+
+## Step 1 - Create the repository instructions file
+
+Create [`.github/copilot-instructions.md`](../.github/copilot-instructions.md) with the following content:
+
+````markdown
+# Repository Instructions
+
+## Architecture
+
+- This repository is a GH-600 study lab for governed agentic development.
+- `app/` contains the small sample application used by the labs.
+- `tests/` contains the automated validation tests for the sample app and lab tasks.
+- `labs/` contains the GH-600 exercise instructions the learner follows in order.
+- `templates/` contains task templates and starter artifacts to be filled in by the learner.
+- `solutions/` contains sample answers for review after an attempt is complete.
+- `.github/` contains repository guidance, skills, and automation.
+- `policies/` and `tools/` contain governance and support tooling.
+
+## Conventions
+
+- Produce a brief plan before editing code.
+- Keep changes narrow and within the approved task scope.
+- Do not refactor unrelated code or expand scope without a clear need.
+- Preserve existing behavior and public interfaces unless the task requires a change.
+- Follow the existing project structure, patterns, and style.
+- Keep code readable, maintainable, and easy to review.
+
+## Testing
+
+- Run the test suite from the repository root after code changes:
+
+```bash
+python3 -m unittest discover -s tests
+```
+
+- Validate the relevant behavior before comparing your work with `solutions/`.
+
+## Security
+
+- Never commit credentials, secrets, tokens, or sensitive environment values.
+- Do not weaken workflow permissions, required checks, CODEOWNERS, branch protections, or security scans.
+- Treat `.github/`, `policies/`, and `tools/` as sensitive paths that require reviewer attention.
+- Stop and request human review before changing deployment settings, environment configuration, token permissions, MCP server configuration, CODEOWNERS, or branch protection.
+- Keep every change reviewable through the repository's governed development workflow.
+````
+
+### What each section does
+
+**Architecture** tells the agent what the repository is and where different kinds of work belong.
+
+**Conventions** define working decisions that may not be obvious from reading one file.
+
+**Testing** gives the agent an exact command so it can validate its own changes.
+
+**Security** defines rules that must remain true even when a task asks for a risky change.
+
+### Why the instructions use direct language
+
+Write each instruction as a rule. For example, use "Run the test suite" instead of "You may want to run the test suite." Short, imperative rules are easier for agents to follow and easier for reviewers to check.
+
+---
+
+## Step 2 - Verify the file
+
+Run these commands from the repository root:
+
+```bash
+test -s .github/copilot-instructions.md \
+  && echo "PASS: instructions file exists and is not empty"
+
+grep -q "## Architecture" .github/copilot-instructions.md \
+  && grep -q "## Conventions" .github/copilot-instructions.md \
+  && grep -q "## Testing" .github/copilot-instructions.md \
+  && grep -q "## Security" .github/copilot-instructions.md \
+  && echo "PASS: required sections are present"
+
+python3 -m unittest discover -s tests
+```
+
+Use `test -s` rather than `test -f`. The `-s` check fails when the file is empty.
+
+### Behavioral check
+
+Open Copilot Chat in this repository and ask:
+
+> What test command should I run in this repository, and which paths require extra caution?
+
+A correct response should name:
+
+- `python3 -m unittest discover -s tests`
+- `.github/`, `policies/`, and `tools/`
+
+If the response is generic or incorrect, confirm that the instructions file is saved at `.github/copilot-instructions.md`.
+
+---
 
 ## Self-check
 
-You completed the lab if your artifacts answer these questions:
+You completed the lab if your instructions answer these questions:
 
-- What should the agent do?
-- What should the agent not do?
-- What evidence proves the work is complete?
-- Which step requires human review?
-- Where can a reviewer inspect the agent's plan before code changes?
+- What is this repository?
+- What should an agent do here?
+- What should an agent not do?
+- What test command should the agent run?
+- Which paths need extra caution?
+
+---
 
 ## Exam notes
 
-For GH-600, expect questions that test whether you can distinguish an assistant-style prompt from a governed agent workflow. The exam is likely to value structured plans, explicit approval gates, traceable artifacts, and clear success criteria over vague instructions like "fix the app."
+- Repository instructions provide durable context; chat prompts provide temporary context.
+- Plans and explanations are not evidence that an implementation is safe.
+- Prefer reviewable evidence such as a diff, test result, scan result, or approval event.
+- Match agent autonomy to task risk and grant the lowest useful capability.
+- Require human review when a change affects sensitive configuration or governance.
+
+---
+
+## Common pitfalls
+
+**The file exists but is empty.** Verify it with `test -s`.
+
+**The instructions are suggestions.** Use direct, imperative rules.
+
+**The test command is vague.** Record the exact command that works in this repository.
+
+**The instructions repeat obvious facts.** Focus on purpose, conventions, validation, and boundaries that the agent cannot safely infer.
+
+**The instructions become outdated.** Update them when the repository structure or validation process changes.
+
+---
+
+## What you built
+
+You created one repository-level instruction file that gives agents shared architecture, conventions, testing, and security guidance.
+
+**Next:** Continue to [Lab 02 - Implement Tool Use and Environment Interaction](02-tools-mcp-environments.md).
