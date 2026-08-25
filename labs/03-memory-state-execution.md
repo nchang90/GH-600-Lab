@@ -12,7 +12,7 @@
 
 ## Why an exercise with no files
 
-This exercise is about the mental model, not a repo change. The exam checks whether you can tell session context, durable artifacts, repository instructions, and Copilot Memory apart.
+This exercise is about how to think about state, not a repo change. The exam checks whether you can tell session context, durable artifacts, repository instructions, and Copilot Memory apart.
 
 The point is not to ask for more memory. It is to change what goes into the bundle.
 
@@ -56,7 +56,7 @@ Here is a Copilot CLI log. Work out what it tells you before reading on.
 2. Which IDE is connected?
 3. Which MCP servers are loaded?
 4. What autonomy level does this agent have?
-5. What tool sequence did it use?
+5. What sequence of tools did it use?
 
 Answers
 
@@ -88,11 +88,11 @@ Write the matching letter (A-E) next to each number.
 
 Answers
 
-1. **A — Session ID / session-state.**
-2. **B — Workflow artifact or job output.**
-3. **C — PR comment / review.**
-4. **D — Instructions or repository memory.**
-5. **E — Session logs / PR timeline.**
+1. **A — Session ID / session-state.** Use `--resume` or `--continue`.
+2. **B — Workflow artifact or job output.** `$GITHUB_OUTPUT` for small values, `upload-artifact` for files.
+3. **C — PR comment / review.** Auditable, attributable, visible to every reviewer, and attached to the change it describes.
+4. **D — Instructions or repository memory.** Persists across all sessions and all agents.
+5. **E — Session logs / PR timeline.** The record of what actually happened.
 
 ### Decision vs event
 
@@ -104,59 +104,106 @@ A review captures a decision. Logs and timelines capture events. Audits need bot
 
 This one is hands-on, and it takes two minutes.
 1. Open **[github.com/settings/copilot/memory](https://github.com/settings/copilot/memory)**.
-2. Check whether Memory is enabled.
-3. Read the listed preferences and their citations.
-4. Delete anything stale or wrong.
+2. Confirm whether Memory is enabled for your account. If you are on a Business or Enterprise licence and see nothing, the organization policy has not been turned on — note that and move on, it does not block the lab.
+3. Read whatever preferences are listed. Each one carries a citation showing what it was inferred from.
+4. Delete any entry that is wrong or stale, and notice that you can do this per entry.
 
 **Questions**
 
-1. A teammate's session learned that this repo deploys through `ci.yml`. Will your session know that?
-2. You tell Copilot "always use British spelling in comments." Where does that land?
-3. A repository fact was true last month, but the code changed. What happens?
-4. Your team has a rule that every new endpoint needs a test. Copilot Memory or `copilot-instructions.md`?
+1. A teammate's session learned that this repository deploys through `ci.yml` rather than by hand. Will your session know that?
+2. You tell Copilot "always use British spelling in comments." Where does that land, and who else is affected?
+3. Your team has a rule that every new endpoint needs a test. Copilot Memory or `copilot-instructions.md`?
+4. Copilot cites a repository fact that was true last month but the code has since changed. What happens?
 
 Answers
 
-1. **Probably, but do not depend on it.** Repository facts are shared, but only if Memory is enabled and the fact still passes revalidation.
-2. **User-level preference; only you see it.**
-3. **It is discarded after revalidation fails.**
-4. **`copilot-instructions.md`.** It is a team rule that should apply to everyone and be reviewable in Git.
+1. **Probably, but do not depend on it.** Repository-level facts are shared with anyone who has access to Copilot Memory in that repository — but only if Memory is enabled and the fact still passes revalidation.
+2. **A user-level preference, affecting only you**, across every repository you work in. Your teammates see no change.
+3. **`copilot-instructions.md`.** It is a rule you want enforced for everyone, reviewable in a PR, and versioned with the code.
+4. **It is discarded.** Facts are stored with citations, and Copilot revalidates the citation against the current branch before using the fact.
 
 ---
 
 ## Context drift
 
-Context drift happens when the agent's assumptions stop matching reality.
+Context drift is the failure mode where an agent's assumptions quietly stop matching reality. It is the most common cause of long agent sessions going wrong.
 
-What works:
+It happens when:
 
-- start a fresh session
-- store important facts durably
-- update `copilot-instructions.md` if the correction is recurring
+- the agent read a file early, the file changed, and it is still reasoning about the old contents
+- earlier turns have scrolled out of the usable context window
+- the agent inferred something plausible and never re-checked it
+
+The symptom is characteristic: the agent behaves consistently but incorrectly, and patiently re-explaining does not help, because the flawed assumption is still sitting in context alongside your correction.
+
+What works: start a fresh session, and put the important facts somewhere durable so the new session picks them up automatically. If the same correction is needed twice, it belongs in `copilot-instructions.md`.
 
 ---
 
 ## Exam notes
 
-- Session context is temporary.
-- Durable artifacts are the real record.
-- Repository instructions are for rules that must apply to everyone.
-- Copilot Memory is shared, cited, revalidated, and expires after 28 days unused.
-- If a rule must hold for the whole team, put it in an instruction file.
+### Paths to memorize
+
+```text
+~/.copilot/session-state/<id>/events.jsonl    Session event log
+```
+
+### Resuming
+
+- `--resume` — resume a specific session
+- `--continue` — continue the most recent session
+
+### How to tell new from resumed in a log
+
+A resumed session shows `resume=true` and a line loading `events.jsonl`. A new session shows neither. Look for the absence.
+
+### Durable state is not chat memory
+
+The exam repeatedly probes this. Chat history is not durable, not shareable, and not auditable. Durable state means PRs, issues, artifacts, and logs. If an answer option proposes passing information between jobs "through the conversation," it is wrong.
+
+### Copilot Memory
+
+| Fact | Value |
+| --- | --- |
+| Enabled per | **User**, not repository |
+| Default on | Individual plans. Business/Enterprise need an admin policy first |
+| Two types | Repository-level facts, user-level preferences |
+| Who can create repository facts | Users with **write access** only |
+| Retention | Deleted after **28 days** unused |
+| Validated how | Citations re-checked against the current branch |
+| Used by | Copilot cloud agent, Copilot code review, Copilot CLI |
+| Code review limitation | Repository facts only — ignores user preferences |
+
+If a question asks where a rule belongs and the rule must apply to everyone and be reviewable, the answer is an instruction file, not Copilot Memory.
+
+### Reading autonomy from a log
+
+Infer the level from the tools that appear:
+
+| Tools observed | Level |
+| --- | --- |
+| `search`, `read` | Low |
+| plus `edit`, `execute` | Medium |
+| plus `agent`, MCP servers | High |
 
 ---
 
 ## Common pitfalls
 
-- Assuming the agent remembers earlier corrections
-- Passing data between workflow jobs without an artifact
-- Treating a plan as proof
-- Relying on Copilot Memory for team standards
+**Assuming the agent remembers earlier corrections.** It remembers only what is currently in context. Repeated corrections signal a missing instruction file entry.
+
+**Passing data between workflow jobs without an artifact.** Jobs are isolated machines. Without `upload-artifact` / `download-artifact` or `$GITHUB_OUTPUT`, the data does not travel.
+
+**Treating a plan as a record.** A plan states intent. Only logs and diffs record outcome.
+
+**Relying on Copilot Memory for a team standard.** It is enabled per user, expires after 28 days of disuse, and lives outside your repository. A standard that must hold for everyone belongs in an instruction file.
+
+**Fighting context drift by explaining harder.** Restart the session and fix the durable source instead.
 
 ---
 
 ## What you learned
 
-Where agent state lives, how to read a session log, which storage fits each need, and where Copilot Memory sits between session context and repository instructions.
+Where agent state actually lives, how to read a session log for session type and autonomy level, which storage mechanism fits each need, and where Copilot Memory sits between session context and repository instructions. Exercise 5 applies this directly: the multi-agent pipeline passes every handoff through workflow artifacts, for exactly the reasons established here.
 
 **Next:** [Lab 04 — Perform Evaluation, Error Analysis, and Tuning](04-evaluation-error-analysis-tuning.md)
