@@ -6,7 +6,7 @@
 
 **Prerequisite:** [Lab 02](02-tools-mcp-environments.md) complete.
 
-**Time:** ~30 minutes
+**Time:** ~40 minutes
 
 ---
 
@@ -109,6 +109,50 @@ This one is hands-on, and it takes two minutes.
 
 ---
 
+## Task 4 — Carry state across tools and environments
+
+The same task often moves between your IDE, Copilot CLI, and the cloud agent running in Actions. Each is a different machine with different context.
+
+Decide where each fact must live so it survives the move:
+
+| Fact | Survives IDE → CLI? | Survives → cloud agent? | Where it must live |
+| --- | --- | --- | --- |
+| "We decided to apply the discount before tax" | ? | ? | ? |
+| The current branch name | ? | ? | ? |
+| "Run `python3 -m unittest discover -s tests`" | ? | ? | ? |
+| Which files are already changed | ? | ? | ? |
+| `GITHUB_TOKEN` | ? | ? | ? |
+
+<details>
+<summary>Answers</summary>
+
+| Fact | Where it must live |
+| --- | --- |
+| The discount decision | The issue or PR description. It is a decision, so it needs a durable, reviewable home. |
+| Branch name | Git itself — every environment reads it from the checkout. Never pass it as context. |
+| Test command | `.github/copilot-instructions.md`. Every tool reads it, so it never has to be remembered. |
+| Changed files | `git diff` against the base. Derive it; do not carry it. |
+| `GITHUB_TOKEN` | Nowhere you control. Each environment gets its own from its own trust relationship. |
+
+The pattern: **facts that can be derived should be derived, and facts that cannot must be written somewhere every environment reads.** Anything carried only in a session dies at the boundary.
+
+</details>
+
+### The revalidation checklist
+
+Before resuming work in a *different* environment, confirm each of these against the repository rather than against memory:
+
+- The objective and its approved scope
+- The current branch, and whether it has moved
+- Decisions already made, and where they are recorded
+- Which files have already changed
+- What validation has already passed
+- Open risks and unresolved questions
+
+An agent that resumes without revalidating is not continuing work — it is starting new work that happens to share a branch.
+
+---
+
 ## Context drift
 
 Context drift is the failure mode where an agent's assumptions quietly stop matching reality. It is the most common cause of long agent sessions going wrong.
@@ -134,6 +178,8 @@ You completed the lab if you can answer without looking:
 - Where does a rule belong when it must apply to everyone and be reviewable?
 - Why is Copilot Memory the wrong home for a team standard?
 - What is the fix for context drift, and why is re-explaining not it?
+- Which facts should be derived rather than carried between environments
+- What must be revalidated before resuming a task on a different machine
 
 ---
 

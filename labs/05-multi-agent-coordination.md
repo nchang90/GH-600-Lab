@@ -184,6 +184,25 @@ You completed the lab if you can explain:
 - Partial results are still results. Pipelines that discard them on a single failure lose the evidence a reviewer needs most.
 - Consolidation is a step someone must own. Findings scattered across seven artifacts have not been reviewed.
 
+### Isolation has four mechanisms, not one
+
+| Mechanism | Isolates |
+| --- | --- |
+| `strategy.matrix` | Agents from each other — separate runner, checkout, filesystem |
+| `permissions` | What each job's token can reach |
+| Branches | Each agent's changes from `main` and from other agents |
+| `concurrency` | **Runs of the same workflow from each other** |
+
+The fourth is the one people forget. Without it, pushing twice in quick succession starts a second agent review while the first is still running — two sets of findings land on one pull request, possibly contradicting each other, with no way to tell which reflects the current code.
+
+```yaml
+concurrency:
+  group: agent-review-${{ github.ref }}
+  cancel-in-progress: true
+```
+
+`group` keyed on `github.ref` means one run per branch, not one run globally — branches still review in parallel. `cancel-in-progress: true` is right for reviews, where only the latest commit matters; it is wrong for deployments, where cancelling mid-run can leave a partial rollout.
+
 ### The two flags, and what each one saves
 
 | Flag | Default | What breaks without it |

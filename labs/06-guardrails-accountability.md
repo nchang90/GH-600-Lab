@@ -9,10 +9,12 @@
 | 1 | `.github/hooks/pre-tool-policy.json` | Hook configuration |
 | 2 | `.github/hooks/scripts/pre-tool-policy.sh` | Deny dangerous commands |
 | 3 | `.github/hooks/scripts/post-edit-check.sh` | Audit trail after edits |
+| 4 | `.github/PULL_REQUEST_TEMPLATE.md` | Evidence and scope, requested at PR time |
+| 5 | — | A governance review cadence and drift checklist |
 
 **Prerequisite:** [Lab 05](05-multi-agent-coordination.md) complete.
 
-**Time:** About 35 minutes
+**Time:** About 45 minutes
 
 ---
 
@@ -120,6 +122,111 @@ This is a detective control, and also a nudge: reminding the agent to run tests 
 
 ---
 
+## Step 4 — Add a pull request template
+
+**Create this file:** `.github/PULL_REQUEST_TEMPLATE.md`
+
+Hooks stop actions. Rulesets block merges. A template does neither — it changes what a reviewer is *shown*, which is the control that decides whether the other two get used properly.
+
+```markdown
+## What changed
+
+## Why
+
+## Evidence
+
+| Signal | Result | Where to check |
+| --- | --- | --- |
+| Unit tests | | |
+| Changed file scope | | |
+| Plan adherence | | |
+| Human review | | |
+
+## Scope
+
+- [ ] Changes are limited to the files named in the task brief
+- [ ] No changes to `.github/`, `infra/`, or `tools/` — or those changes are in scope and called out
+- [ ] No existing test or validation guard was removed
+- [ ] No credentials, tokens, or secrets are included
+
+## Authored by
+
+- [ ] Human
+- [ ] Agent — name the agent, and confirm commits carry a `Co-authored-by` trailer
+```
+
+The checkbox that matters most is "no existing test or validation guard was removed." That is the failure Lab 04 analysed, it passed CI, and no automated control caught it — because the agent deleted the test that would have.
+
+**Verify:**
+
+```bash
+test -s .github/PULL_REQUEST_TEMPLATE.md && echo "PASS: template present"
+gh pr create --title "test" --body "" --dry-run 2>/dev/null | head -5 || \
+  echo "(open a real PR to see the template populate the body)"
+```
+
+---
+
+## Step 5 — Set a governance review cadence
+
+No file to create. Controls decay. Checks get renamed, CODEOWNERS entries point at people who left, permissions widen one PR at a time, and secrets migrate to broader scopes. None of that trips an alarm.
+
+Write your cadence into `.github/copilot-instructions.md` or your team runbook:
+
+| Cadence | Review |
+| --- | --- |
+| Weekly | Failed runs and repeated policy violations |
+| Monthly | Workflow permissions and secret scopes |
+| Quarterly | Rulesets, CODEOWNERS, environment reviewers, artifact retention |
+
+### Agent lifecycle
+
+An agent is deployed, monitored, updated, and eventually retired. Each stage needs an owner. Answer for the four agents you built in Lab 02:
+
+- Who owns each agent file, and how would a reviewer know?
+- What signal would tell you an agent has stopped being useful?
+- When you retire one, what else must change? (Its entry in the orchestrator's delegation rules, any workflow matrix naming it, and the hook rules written for it.)
+
+### Governance failure patterns
+
+Match each anti-pattern to the control that mitigates it:
+
+| Anti-pattern | Example | Mitigation |
+| --- | --- | --- |
+| Unbounded autonomy | No approval before production deploy | ? |
+| Excess permissions | A token with `write-all` and read access to every secret | ? |
+| Missing audit trail | Console logs only, no uploaded artifacts | ? |
+| Bypass paths | Direct push to `main`, checks disabled | ? |
+| Rubber-stamping | Approval becomes "click to unblock" | ? |
+
+<details>
+<summary>Answers</summary>
+
+| Anti-pattern | Mitigation |
+| --- | --- |
+| Unbounded autonomy | Protected environments with required reviewers, plus rulesets |
+| Excess permissions | Least privilege — job-level `permissions`, environment-scoped secrets |
+| Missing audit trail | Artifact uploads and evidence-first workflows, as in Lab 05 |
+| Bypass paths | Branch protection and rulesets that restrict direct push |
+| Rubber-stamping | Better evidence, CODEOWNERS on the paths that matter, smaller pull requests |
+
+**Rubber-stamping is the one no mechanism fixes.** Every other row has a control that enforces it. That one is defeated by an approval gate people click through — which is why Lab 01's rule about approvals that do not materially reduce risk matters: an approval nobody reads is worse than none, because it produces an audit trail suggesting review happened.
+
+</details>
+
+### Prevent ambiguity before execution
+
+If a task cannot be defined precisely, it should not run autonomously. Before assigning work to an agent, the brief needs acceptance criteria, constraints and **non-goals**, the specific paths in scope, and the validation expected. You built most of that in Lab 01 Step 3 — add a `## Non-goals` section to `templates/agent-task-brief.md` now, because what an agent must *not* do is the part briefs usually omit.
+
+**Verify:**
+
+```bash
+grep -q "## Non-goals" templates/agent-task-brief.md \
+  && echo "PASS: non-goals present" || echo "FAIL: add ## Non-goals"
+```
+
+---
+
 ## Task — Match each scenario to its control
 
 | # | Scenario |
@@ -192,6 +299,9 @@ You completed the lab if you can explain:
 - Why the hook and branch protection are both needed for the same rule
 - The difference between a hook `toolName` and an agent `tools` entry
 - What your hook cannot stop, and which control covers that gap
+- Which governance anti-pattern has no mechanical mitigation, and why
+- What you would review weekly, monthly, and quarterly, and why the cadences differ
+- What else must change when you retire an agent
 
 ---
 

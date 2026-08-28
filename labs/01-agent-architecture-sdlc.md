@@ -64,7 +64,7 @@ python3 -m unittest discover -s tests
 
 ## Step 2 — Verify the file
 
-Run these commands from the repository root:
+**Verify:**
 
 ```bash
 test -s .github/copilot-instructions.md \
@@ -197,6 +197,7 @@ You completed the lab if your instructions answer these questions:
 
 ## Exam notes
 
+- **An assistant suggests; an agent acts.** The distinction is not model capability, it is whether output reaches the repository without a human keystroke in between. Everything in these labs exists because the second kind needs boundaries the first does not.
 - **GitHub is the system of record and the control plane.** Branches, pull requests, checks, logs, and review events are where agent work becomes reviewable. Chat history is none of those.
 - **The agent lifecycle is plan → act → evaluate**, and each stage must leave an artifact. A stage with no artifact cannot be governed.
 - **Traceability means attribution plus intent.** `Co-authored-by` trailers say who acted; the issue and task brief say what was asked. An audit needs both.

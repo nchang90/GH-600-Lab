@@ -6,7 +6,7 @@ Official study guide: <https://learn.microsoft.com/en-gb/credentials/certificati
 
 ## At a glance
 
-- **Total duration:** about 3 hours 55 minutes, including preparation.
+- **Total duration:** about 4 hours 25 minutes, including preparation.
 - **Environment:** your own fork, plus optional Azure resources for one exercise.
 - **Estimated cost:** effectively free. The optional deployment scales to zero when idle and the image lives in GitHub Container Registry, which is free for public packages. [Tear down](labs/00-lab-preparation.md#6-teardown) when you finish regardless.
 
@@ -18,11 +18,11 @@ Work through them in order — each builds on the last.
 | --- | --- | --- | --- |
 | [00 — Lab Preparation](labs/00-lab-preparation.md) | Prerequisites | ~30 min | Fork, tooling, passing tests, Actions enabled |
 | [01 — Prepare Agent Architecture](labs/01-agent-architecture-sdlc.md) | 1 | ~25 min | `.github/copilot-instructions.md`, task brief, lifecycle trace |
-| [02 — Tool Use & Environment](labs/02-tools-mcp-environments.md) | 2 | ~45 min | Four agents, `.mcp.json`, execution boundaries |
-| [03 — Memory, State & Execution](labs/03-memory-state-execution.md) | 3 | ~30 min | *(analysis)* Session logs, durable state |
+| [02 — Tool Use & Environment](labs/02-tools-mcp-environments.md) | 2 | ~55 min | Four agents, `.mcp.json`, execution boundaries |
+| [03 — Memory, State & Execution](labs/03-memory-state-execution.md) | 3 | ~40 min | *(analysis)* Session logs, durable state |
 | [04 — Evaluation, Error Analysis & Tuning](labs/04-evaluation-error-analysis-tuning.md) | 4 | ~30 min | A real change, tuned instructions, a PR that is the evaluation |
 | [05 — Multi-Agent Coordination](labs/05-multi-agent-coordination.md) | 5 | ~40 min | Parallel agent review and consolidation in CI |
-| [06 — Guardrails & Accountability](labs/06-guardrails-accountability.md) | 6 | ~35 min | Preventive hooks and an audit trail |
+| [06 — Guardrails & Accountability](labs/06-guardrails-accountability.md) | 6 | ~45 min | Preventive hooks and an audit trail |
 
 Lab 03 creates no files. It covers judgement the exam tests through log reading and scenario matching, and the concepts it establishes are applied directly in Labs 04 and 05.
 

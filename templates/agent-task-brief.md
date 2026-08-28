@@ -14,6 +14,8 @@
 
 ## Success criteria
 
+## Non-goals
+
 ## Constraints
 
 ## Execution boundaries

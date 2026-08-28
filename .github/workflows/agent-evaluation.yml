@@ -5,6 +5,12 @@ on:
     branches:
       - main
 
+# One run per branch. A new push cancels the in-flight review rather than
+# letting two agent reviews race and post contradictory findings on one PR.
+concurrency:
+  group: agent-review-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 

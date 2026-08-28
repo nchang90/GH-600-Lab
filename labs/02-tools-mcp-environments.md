@@ -13,10 +13,13 @@
 | 5 | `.mcp.json` | External tool servers |
 | 6 | `templates/agent-task-brief.md` | Execution boundaries, including the deployment |
 | 7 | `.github/workflows/copilot-setup-steps.yml` | Cloud-agent environment |
+| 9 | `.github/workflows/test-coverage-review.md` | An agentic workflow |
+
+Step 8 creates nothing — it reads the deployment template that the boundaries in Step 6 protect.
 
 **Prerequisite:** [Lab 01](01-agent-architecture-sdlc.md) complete.
 
-**Time:** About 45 minutes
+**Time:** About 55 minutes
 
 **Environment:** Step 8 reads the deployment in [infra/resources.bicep](../infra/resources.bicep), which ships the same cart code your agents review. You do not need it deployed — the template is the teaching material. [Lab 00, section 5](00-lab-preparation.md#5-deploy-the-cart-api-optional) has the procedure if you want a live endpoint.
 
@@ -55,7 +58,7 @@ You are ... (the body becomes the agent's instructions)
 
 ## Step 1 — The reviewer agent (low autonomy)
 
-**Create this file:** `.github/agents/reviewer_agent.md`
+**Create this file:** `.github/agents/reviewer.agent.md`
 
 ````markdown
 ---
@@ -95,6 +98,20 @@ For every finding, report:
 
 If no defects are found, state that clearly and name the remaining test gaps.
 ````
+
+**Verify:**
+
+```bash
+test -s .github/agents/reviewer.agent.md && echo "PASS: file non-empty"
+grep -q "description:" .github/agents/reviewer.agent.md && echo "PASS: has description"
+grep -qE "^  - (edit|execute)" .github/agents/reviewer.agent.md \
+  && echo "FAIL: reviewer must not have edit or execute" \
+  || echo "PASS: read-only"
+```
+
+**Behavioural test:** select `reviewer` in the agent picker and ask it to fix a bug in `app/cart.py`. It should report the bug and decline to change the file. That refusal is the feature.
+
+---
 
 ## Step 2 — The test-runner agent (medium autonomy)
 
@@ -142,6 +159,18 @@ Run from the repository root. The tests import `app.cart`, which resolves only f
 - **Action taken**: what you changed, or why you changed nothing
 ````
 
+**Verify:**
+
+```bash
+test -s .github/agents/test-runner.agent.md && echo "PASS: file non-empty"
+grep -q "python3 -m unittest discover -s tests" .github/agents/test-runner.agent.md \
+  && echo "PASS: names the real command"
+```
+
+**Behavioural test:** break an assertion in `tests/test_cart.py`, then ask `test-runner` to investigate. It should identify the specific failing test and say whether the fault is in the test or in `app/cart.py`.
+
+---
+
 ## Step 3 — The security-scanner agent
 
 **Create this file:** `.github/agents/security-scanner.agent.md`
@@ -181,6 +210,17 @@ You are the security analysis agent for this repository.
 - **Why it matters**
 - **Recommended remediation** (for a human or the test-runner to apply)
 ````
+
+**Verify:**
+
+```bash
+test -s .github/agents/security-scanner.agent.md && echo "PASS: file non-empty"
+grep -qE "^  - edit" .github/agents/security-scanner.agent.md \
+  && echo "FAIL: scanner must not have edit" \
+  || echo "PASS: cannot remediate"
+```
+
+---
 
 ## Step 4 — The orchestrator agent
 
@@ -222,6 +262,17 @@ You are the coordination agent for this repository.
 A single consolidated report with one section per delegated agent, then a
 **Conflicts** section, then an overall recommendation.
 ````
+
+**Verify:**
+
+```bash
+for f in reviewer test-runner security-scanner orchestrator; do
+  test -s ".github/agents/$f.agent.md" \
+    && echo "PASS: $f" || echo "FAIL: $f missing or empty"
+done
+```
+
+---
 
 ## Step 5 — Configure MCP servers
 
@@ -321,6 +372,16 @@ When Copilot's coding agent works on a pull request, it runs on GitHub's infrast
 
 Get either wrong and the file is silently ignored — no error, no warning, just an agent working in an unprepared environment.
 
+Setup prepares the environment; it does not validate the code. The version here deliberately does not run the test suite — a failing test in setup would mean the agent's environment never becomes ready, turning an ordinary red test into a total outage for the agent.
+
+**Verify:**
+
+```bash
+python3 -c "import yaml; d=yaml.safe_load(open('.github/workflows/copilot-setup-steps.yml')); \
+  assert 'copilot-setup-steps' in d['jobs'], 'job must be named copilot-setup-steps'; \
+  print('PASS: job correctly named')"
+```
+
 ## Step 8 — Read the environment you are securing
 
 No file to create. [infra/resources.bicep](../infra/resources.bicep) deploys the cart API — the same code your agents review and test — to Azure Container Apps. Open it and map each control to what it enforces:
@@ -357,6 +418,88 @@ For each row, decide the retry rule, the rollback step, and the escalation trigg
 
 An agent widening a CIDR to clear its own `403` is the failure this lab exists to prevent. Note also which symptoms are indistinguishable from outside: a `403` and a service that never started both look like "it's broken" to the agent, and they need opposite responses.
 
+## Step 9 — Author an agentic workflow
+
+**Create this file:** `.github/workflows/test-coverage-review.md`
+
+A third file type sits between the two you have already built. Custom agents (`.github/agents/*.agent.md`) define *who* an agent is. Actions workflows (`.yml`) define *when* automation runs. **Agentic workflows** are Markdown files in `.github/workflows/` that define an AI task declaratively — trigger, permissions, tools, and allowed outputs in frontmatter, with the instructions as the body.
+
+````markdown
+---
+on:
+  schedule: weekly
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+engine: copilot
+
+tools:
+  github:
+    allowed:
+      - get_file_contents
+      - list_issues
+
+safe-outputs:
+  create-issue:
+    title-prefix: "[coverage] "
+    labels: [test-coverage, agent-generated]
+    close-older-issues: true
+---
+
+# Weekly test coverage review
+
+Review the cart application for behaviour that is implemented but not tested.
+
+1. Read `app/cart.py` and `app/api.py`.
+2. Read `tests/test_cart.py` and `tests/test_api.py`.
+3. Identify each input validation or calculation branch in `app/` that no test exercises.
+4. Check open issues first; do not raise one that already exists.
+
+Open a single issue listing each gap as:
+
+- **Function** — the function and the specific branch
+- **Why it matters** — what breaks if that branch regresses
+- **Suggested test** — the assertion that would cover it
+
+Report only gaps you can point to a specific line for. If coverage is complete,
+say so and list nothing.
+
+Do not modify any file. This workflow proposes work; it does not perform it.
+````
+
+### `safe-outputs` is the control that matters
+
+Note what the `permissions` block grants: `read`, `read`, `read`. The agent cannot write anything. Yet the workflow creates an issue.
+
+That is the point of `safe-outputs`. Write actions do not come from the token the agent holds — they are declared in frontmatter and performed by the compiled workflow after the agent finishes. The agent proposes; the harness writes, and only in the shapes you declared. An agent that decides to open a pull request instead cannot, because `create-pull-request` is not in that block.
+
+This is the same principle as Step 1's tool list, applied to outputs rather than inputs: **the declaration is the enforcement, not the instruction in the body.**
+
+**Verify:**
+
+```bash
+gh extension install githubnext/gh-aw   # once
+gh aw compile
+```
+
+`gh aw compile` turns each `.md` into a hardened `.lock.yml` beside it — that generated file is what Actions actually runs. Commit both. Editing the `.lock.yml` by hand is pointless; the next compile overwrites it.
+
+```bash
+test -f .github/workflows/test-coverage-review.md && echo "PASS: agentic workflow present"
+grep -q "safe-outputs" .github/workflows/test-coverage-review.md && echo "PASS: outputs are declared"
+grep -qE "^\s+contents: write" .github/workflows/test-coverage-review.md \
+  && echo "FAIL: agent should not hold write permission" \
+  || echo "PASS: read-only permissions"
+```
+
+**Behavioural test:** run it with `gh aw run test-coverage-review`, then check the issue it opened. The issue is authored by the workflow, not by you — which is the attribution question Lab 01 Step 4 asked you to trace.
+
+---
+
 ## Self-check
 
 You completed the lab if you can explain:
@@ -365,6 +508,7 @@ You completed the lab if you can explain:
 - Why the orchestrator is deliberately less capable than the test-runner
 - Why the security-scanner has `execute` but not `edit`
 - Which part of your MCP allow-list is actually enforced, and which part is only documented
+- How an agentic workflow can create an issue while holding only read permissions
 - Why an explicit image reference is an execution boundary and not just a deployment detail
 - What breaks first if the allowed CIDR is the only control protecting an unauthenticated service
 
@@ -385,6 +529,18 @@ You completed the lab if you can explain:
 - A local process has `command` and `args`. A remote HTTP or SSE server has a `url`.
 - A URL passed *inside* a local command's arguments does not make the transport remote. This is the distinction questions are built on.
 - Read access to issue context does not imply permission to merge pull requests. Allow-lists are per operation, not per server.
+
+### The three agent file types
+
+| File | Defines | Runs |
+| --- | --- | --- |
+| `.github/agents/*.agent.md` | Who an agent is — persona and tool list | When you select it |
+| `.github/workflows/*.yml` | Conventional CI automation | On its trigger |
+| `.github/workflows/*.md` | An AI task — trigger, tools, and safe outputs | On its trigger, after `gh aw compile` |
+
+- Agentic workflows compile to `.lock.yml`; the compiled file is what Actions runs.
+- `safe-outputs` declares which write actions are permitted. The agent's own permissions can stay read-only.
+- `engine` selects the model provider — Copilot, Claude, Codex, Gemini, or Pi.
 
 ### Where each artifact lives
 
