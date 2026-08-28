@@ -7,8 +7,8 @@
 | Step | File | Purpose |
 | --- | --- | --- |
 | 1 | `.github/copilot-instructions.md` | Repository-wide context every agent reads |
-| 3 | `templates/agent-task-brief.md` | Inputs, outputs, and success criteria for one task |
-| 4 | — | Map the agent lifecycle onto the GitHub surfaces that record it |
+| 2 | `templates/agent-task-brief.md` | Inputs, outputs, and success criteria for one task |
+| 3 | — | Map the agent lifecycle onto the GitHub surfaces that record it |
 
 **Prerequisite:** [Lab 00](00-lab-preparation.md) complete — the test command must pass before an instruction file can name it.
 
@@ -18,7 +18,7 @@
 
 ## Step 1 — Create the repository instructions file
 
-Create [`.github/copilot-instructions.md`](../.github/copilot-instructions.md) with the following content:
+**Create this file:** `.github/copilot-instructions.md`
 
 ````markdown
 # Repository Instructions
@@ -62,24 +62,29 @@ python3 -m unittest discover -s tests
 - Keep every change reviewable through the repository's governed development workflow.
 ````
 
-## Step 2 — Verify the file
+**Verify:**
 
-Open Copilot Chat in this repository and ask:
+```bash
+test -s .github/copilot-instructions.md \
+  && echo "PASS: instructions file exists and is not empty"
 
-> What test command should I run in this repository, and which paths require extra caution?
+for h in Architecture Conventions Testing Security; do
+  grep -q "## $h" .github/copilot-instructions.md \
+    && echo "PASS: $h" || echo "FAIL: $h missing"
+done
+```
 
-A correct response should name:
+Use `test -s`, not `test -f`. An empty file passes `-f` and is the most common way to lose time here.
 
-- `python3 -m unittest discover -s tests`
-- `.github/`, `tools/`, and `infra/`
-
-If the response is generic or incorrect, confirm that the instructions file is saved at `.github/copilot-instructions.md`.
+**Behavioural test:** open Copilot Chat and ask *"What test command should I run in this repository, and which paths require extra caution?"* It should name `python3 -m unittest discover -s tests` and `.github/`, `tools/`, `infra/`. A generic answer means the file is not being read — check it is saved at `.github/copilot-instructions.md`.
 
 ---
 
-## Step 3 — Define inputs, outputs, and success criteria
+## Step 2 — Define inputs, outputs, and success criteria
 
-Open [templates/agent-task-brief.md](../templates/agent-task-brief.md). The headings `## Inputs`, `## Expected outputs`, and `## Success criteria` are already there and empty. Fill them for one concrete task — adding a loyalty discount to the cart, the task Lab 04 uses:
+**Update this file:** `templates/agent-task-brief.md`
+
+The headings `## Inputs`, `## Expected outputs`, and `## Success criteria` are already there and empty. Fill them for one concrete task — adding a loyalty discount to the cart, the task Lab 04 uses:
 
 ```markdown
 ## Inputs
@@ -103,7 +108,7 @@ Open [templates/agent-task-brief.md](../templates/agent-task-brief.md). The head
 ```
 
 
-## Step 4 — Trace the agent lifecycle through GitHub
+## Step 3 — Trace the agent lifecycle through GitHub
 
 No file to create. Agent work is only governable if each stage of it lands somewhere a human can inspect. Run these against your own fork and record which surface holds which evidence:
 

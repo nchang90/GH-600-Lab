@@ -145,7 +145,9 @@ The highest-leverage control is a path restriction preventing agents from editin
 
 ## Step 3 — Do the change properly
 
-Now make the change the agent should have made.
+**Update these files:** `app/cart.py` and `tests/test_cart.py`
+
+Make the change the agent should have made.
 
 ```bash
 git checkout -b agent/loyalty-discount
@@ -171,7 +173,9 @@ The test run must pass, and the changed-file list must contain only `app/cart.py
 
 ## Step 4 — Tune the right layer
 
-The tuning order says instructions come second, after task clarity. Add **one** rule to `.github/copilot-instructions.md` that would have prevented finding 1 or finding 5.
+**Update this file:** `.github/copilot-instructions.md`
+
+The tuning order puts instructions second, after task clarity. Add **one** rule that would have prevented finding 1 or finding 5.
 
 Make it measurable. "Be careful with workflows" is not a rule — a reviewer cannot tell whether it was followed. "Do not edit `.github/**` unless the task brief lists those paths in scope" is checkable against a diff.
 

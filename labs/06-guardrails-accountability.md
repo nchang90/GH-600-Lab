@@ -216,7 +216,7 @@ Match each anti-pattern to the control that mitigates it:
 
 ### Prevent ambiguity before execution
 
-If a task cannot be defined precisely, it should not run autonomously. Before assigning work to an agent, the brief needs acceptance criteria, constraints and **non-goals**, the specific paths in scope, and the validation expected. You built most of that in Lab 01 Step 3 — add a `## Non-goals` section to `templates/agent-task-brief.md` now, because what an agent must *not* do is the part briefs usually omit.
+If a task cannot be defined precisely, it should not run autonomously. Before assigning work to an agent, the brief needs acceptance criteria, constraints and **non-goals**, the specific paths in scope, and the validation expected. You built most of that in Lab 01 Step 2 — add a `## Non-goals` section to `templates/agent-task-brief.md` now, because what an agent must *not* do is the part briefs usually omit.
 
 **Verify:**
 

@@ -81,16 +81,6 @@ You are a read-only code reviewer for this repository.
 - Report only actionable findings supported by code evidence.
 - List the most severe findings first.
 
-## Output format
-
-For every finding, report:
-
-- **Severity**: Critical, High, Medium, or Low
-- **File**: repository-relative path
-- **Finding**: concise explanation
-- **Recommendation**: specific remediation
-
-If no defects are found, state that clearly and name the remaining test gaps.
 ````
 
 
@@ -136,12 +126,6 @@ Run from the repository root. The tests import `app.cart`, which resolves only f
 - Report the exact command and its result.
 - Do not edit `.github/`, `tools/`, or `infra/`.
 
-## Output format
-
-- **Command**: the exact command run
-- **Result**: pass or fail, with counts
-- **Diagnosis**: for each failure, the cause and the layer it belongs to
-- **Action taken**: what you changed, or why you changed nothing
 ````
 
 **Behavioural test:** break an assertion in `tests/test_cart.py`, then ask `test-runner` to investigate. It should identify the specific failing test and say whether the fault is in the test or in `app/cart.py`.
@@ -179,13 +163,6 @@ You are the security analysis agent for this repository.
 - Do not edit files.
 - Quote the specific line that supports each finding.
 
-## Output format
-
-- **Severity**: Critical, High, Medium, or Low
-- **File and line**
-- **Finding**
-- **Why it matters**
-- **Recommended remediation** (for a human or the test-runner to apply)
 ````
 
 ## Step 4 — The orchestrator agent
@@ -223,10 +200,6 @@ You are the coordination agent for this repository.
 - Do not execute commands directly.
 - Do not summarize away a disagreement between two agents; report both positions.
 
-## Output format
-
-A single consolidated report with one section per delegated agent, then a
-**Conflicts** section, then an overall recommendation.
 ````
 
 
@@ -255,22 +228,7 @@ The remote GitHub MCP server authenticates with OAuth. You log in through the br
 
 This is the strongest version of the secrets rule. Lab 01 said never commit a credential. Here you go one better: **the safest credential is the one that does not exist.** Before writing a config that consumes a token, check whether the service offers OAuth instead — for the exam, and for real work.
 
-If you must run the server locally in Docker, a token is required. Reference it as an input, never inline:
-
-```json
-{
-  "mcpServers": {
-    "github": {
-      "type": "local",
-      "command": "docker",
-      "args": ["run", "-i", "--rm", "-e", "GITHUB_PERSONAL_ACCESS_TOKEN", "ghcr.io/github/github-mcp-server"],
-      "env": { "GITHUB_PERSONAL_ACCESS_TOKEN": "${input:github_token}" }
-    }
-  }
-}
-```
-
-`${input:...}` prompts and stores the value outside the file. A shell-style `$GITHUB_TOKEN` is not interpolated here — it would be passed through as the literal string.
+If you must run the server locally in Docker a token is required — reference it as `${input:github_token}`, never inline. A shell-style `$GITHUB_TOKEN` is not interpolated in this file and would be passed through as a literal string.
 
 ### Where the restriction is actually enforced
 
@@ -303,7 +261,9 @@ Ask an agent to merge a pull request through MCP. It should report that no such 
 
 ## Step 6 — Define execution boundaries
 
-Update [templates/agent-task-brief.md](../templates/agent-task-brief.md) so its **Execution boundaries** section covers all seven scopes. Six are already there. Add the seventh:
+**Update this file:** `templates/agent-task-brief.md`
+
+Its **Execution boundaries** section needs all seven scopes. Six are there. Add the seventh:
 
 ```markdown
 - Reach the cart API and MCP tools only through the endpoints named in this brief.
@@ -449,21 +409,39 @@ This is the same principle as Step 1's tool list, applied to outputs rather than
 **Verify:**
 
 ```bash
-gh extension install githubnext/gh-aw   # once
-gh aw compile
+gh extension install github/gh-aw   # once
+gh aw init                          # once per repository
+gh aw validate                      # checks the frontmatter without writing anything
+gh aw compile                       # generates the .lock.yml Actions actually runs
 ```
 
-`gh aw compile` turns each `.md` into a hardened `.lock.yml` beside it — that generated file is what Actions actually runs. Commit both. Editing the `.lock.yml` by hand is pointless; the next compile overwrites it.
+`gh aw compile` turns each `.md` into a hardened `.lock.yml` beside it. **Commit both** — Actions runs the lock file, not your Markdown. Editing the `.lock.yml` by hand is pointless; the next compile overwrites it.
+
+### Or start from the catalogue
+
+You do not have to write one from scratch. `gh aw` installs workflows from other repositories:
 
 ```bash
-test -f .github/workflows/test-coverage-review.md && echo "PASS: agentic workflow present"
-grep -q "safe-outputs" .github/workflows/test-coverage-review.md && echo "PASS: outputs are declared"
+gh aw add-wizard githubnext/agentics/daily-repo-status
+gh aw status
+```
+
+Apply the same scrutiny you gave the MCP allow-list in Step 5: **read the `tools:` and `safe-outputs:` blocks before compiling.** An installed workflow runs with whatever permissions and write actions its author declared, in your repository. `gh aw validate` tells you it is well-formed — it does not tell you it is safe for you.
+
+```bash
+gh aw validate
+
+grep -q "safe-outputs" .github/workflows/test-coverage-review.md \
+  && echo "PASS: write actions are declared, not granted"
+
 grep -qE "^\s+contents: write" .github/workflows/test-coverage-review.md \
-  && echo "FAIL: agent should not hold write permission" \
+  && echo "FAIL: the agent should not hold write permission" \
   || echo "PASS: read-only permissions"
 ```
 
-**Behavioural test:** run it with `gh aw run test-coverage-review`, then check the issue it opened. The issue is authored by the workflow, not by you — which is the attribution question Lab 01 Step 4 asked you to trace.
+`gh aw validate` compiles the frontmatter and reports errors without writing a lock file — run it before every commit.
+
+**Behavioural test:** run it with `gh aw run test-coverage-review`, then check the issue it opened. The issue is authored by the workflow, not by you — which is the attribution question Lab 01 Step 3 asked you to trace.
 
 ---
 
@@ -518,7 +496,9 @@ You completed the lab if you can explain:
 | `.github/workflows/*.yml` | Conventional CI automation | On its trigger |
 | `.github/workflows/*.md` | An AI task — trigger, tools, and safe outputs | On its trigger, after `gh aw compile` |
 
-- Agentic workflows compile to `.lock.yml`; the compiled file is what Actions runs.
+- Agentic workflows compile to `.lock.yml`; the compiled file is what Actions runs. Commit both.
+- `gh aw validate` checks frontmatter without writing; `gh aw compile` writes the lock file.
+- `gh aw add` and `gh aw add-wizard` install workflows from other repositories — read their `tools:` and `safe-outputs:` before compiling.
 - `safe-outputs` declares which write actions are permitted. The agent's own permissions can stay read-only.
 - `engine` selects the model provider — Copilot, Claude, Codex, Gemini, or Pi.
 

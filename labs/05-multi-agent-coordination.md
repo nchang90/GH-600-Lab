@@ -82,6 +82,8 @@ Add three jobs that run alongside the existing `test` and `scope-check`:
 
 ## Step 3 — Add the consolidation job
 
+**Update this file:** `.github/workflows/agent-evaluation.yml`
+
 Append one more job:
 
 ```yaml
