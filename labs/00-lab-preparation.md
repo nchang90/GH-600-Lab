@@ -1,29 +1,48 @@
 # Lab 00 — Lab Preparation
 
-**Goal:** get a working lab environment before Lab 01, so that no exercise stops on a missing tool, an unenabled setting, or a failing test command.
+## Introduction
 
-**You will create:** no repository files — this lab configures your fork, your machine, and (optionally) your Azure resource group.
+In this lab, you prepare a working environment for the GH-600 exercises. You configure your fork and local tools, verify the sample application, enable GitHub Actions, and optionally deploy the cart API to Azure.
 
-**Time:** About 30 minutes
+**Estimated time:** 30 minutes
 
----
+## Learning objectives
+
+After completing this lab, you'll be able to:
+
+- Confirm that the required local tools are available.
+- Prepare a fork for governed agentic development.
+- Run the repository's automated tests.
+- Enable GitHub Actions for later exercises.
+- Optionally deploy and remove the sample API.
+
+## Prerequisites
+
+- A GitHub account with access to GitHub Copilot in your IDE and Copilot CLI.
+- For the optional deployment, an Azure subscription and permission to create a resource group.
+
+## Lab scenario
+
+Later labs assume that tests, workflows, and repository tools already work. You need to establish that baseline before adding agent instructions, custom agents, workflows, and guardrails.
+
+**Lab output:** No repository files are created. This lab configures your fork, your machine, and optionally your Azure resource group.
 
 ## What this lab sets up
 
 | Section | What you get | Required? |
 | --- | --- | --- |
-| [1. Prerequisites](#1-prerequisites) | Tool versions the exercises assume | Yes |
-| [2. Fork and clone](#2-fork-and-clone) | Your own copy to commit into | Yes |
-| [3. Verify the sample application](#3-verify-the-sample-application) | A passing test command | Yes |
-| [4. Enable Actions](#4-enable-actions) | Workflow runs on your fork | Yes |
-| [5. Deploy the cart API](#5-deploy-the-cart-api-optional) | A running service for Labs 02 and 04 | Optional |
-| [6. Teardown](#6-teardown) | No ongoing Azure charges | If you did section 5 |
+| [Exercise 1 — Verify prerequisites](#exercise-1--verify-prerequisites) | Tool versions the exercises assume | Yes |
+| [Exercise 2 — Fork and clone the repository](#exercise-2--fork-and-clone-the-repository) | Your own copy to commit into | Yes |
+| [Exercise 3 — Verify the sample application](#exercise-3--verify-the-sample-application) | A passing test command | Yes |
+| [Exercise 4 — Enable GitHub Actions](#exercise-4--enable-github-actions) | Workflow runs on your fork | Yes |
+| [Exercise 5 — Deploy the cart API](#exercise-5--deploy-the-cart-api-optional) | A running service for Labs 02 and 04 | Optional |
+| [Exercise 6 — Remove the Azure resources](#exercise-6--remove-the-azure-resources) | No ongoing Azure charges | If you completed Exercise 5 |
 
-Labs 01 through 06 assume sections 1 to 4 are complete. Only Lab 02b uses section 5, and it tells you what to do if you skipped it.
+Labs 01 through 06 assume Exercises 1 through 4 are complete. Only Lab 02b uses Exercise 5, and it tells you what to do if you skipped it.
 
 ---
 
-## 1. Prerequisites
+## Exercise 1 — Verify prerequisites
 
 | Tool | Minimum | Check with |
 | --- | --- | --- |
@@ -33,14 +52,14 @@ Labs 01 through 06 assume sections 1 to 4 are complete. Only Lab 02b uses sectio
 | Azure CLI | 2.60 | `az version` |
 | Azure Developer CLI | 1.11 | `azd version` |
 
-Azure CLI and Azure Developer CLI are needed only for section 5. Everything else is required. Install azd with `brew install azure-dev-cli` on macOS, or see [the install guide](https://learn.microsoft.com/azure/developer/azure-developer-cli/install-azd).
+Azure CLI and Azure Developer CLI are needed only for Exercise 5. Everything else is required. Install azd with `brew install azure-dev-cli` on macOS, or see [the install guide](https://learn.microsoft.com/azure/developer/azure-developer-cli/install-azd).
 
 You also need:
 
 - A GitHub account with access to GitHub Copilot in your IDE and Copilot CLI.
-- For section 5 only: an Azure subscription, and permission to create a resource group in it.
+- For Exercise 5 only: an Azure subscription, and permission to create a resource group in it.
 
-**Verify:**
+### Check your work
 
 ```bash
 git --version && python3 --version && gh --version
@@ -48,7 +67,7 @@ git --version && python3 --version && gh --version
 
 ---
 
-## 2. Fork and clone
+## Exercise 2 — Fork and clone the repository
 
 Fork this repository to your own account, then clone your fork:
 
@@ -59,7 +78,7 @@ cd GH-600Lab
 
 Work in your fork, not the original. Every lab commits files, and the exercises assume you can push a branch and open a pull request against your own `main`.
 
-**Verify:**
+### Check your work
 
 ```bash
 git remote -v
@@ -69,11 +88,11 @@ You should see `origin` pointing at your fork.
 
 ---
 
-## 3. Verify the sample application
+## Exercise 3 — Verify the sample application
 
 The labs use a small Python cart module (`app/cart.py`) as the thing agents read, change, and test.
 
-**Verify:**
+### Check your work
 
 ```bash
 python3 -m unittest discover -s tests
@@ -85,14 +104,14 @@ This exact command appears in `.github/copilot-instructions.md`, in the agent fi
 
 ---
 
-## 4. Enable Actions
+## Exercise 4 — Enable GitHub Actions
 
 Two labs run workflows, so enable it now:
 
 1. Open your fork on GitHub → **Actions** tab.
 2. Choose **I understand my workflows, go ahead and enable them**.
 
-**Verify:**
+### Check your work
 
 ```bash
 gh workflow list
@@ -102,13 +121,13 @@ You should see `Agent evaluation` and `Copilot setup steps`. If the command repo
 
 ---
 
-## 5. Deploy the cart API (optional)
+## Exercise 5 — Deploy the cart API (optional)
 
 Lab 02b reasons about a real deployment and the network boundary around it. You can complete it by reading [infra/resources.bicep](../infra/resources.bicep) without deploying anything — the template is the teaching material.
 
 Deploy if you want the evidence chain in Lab 04 to reach a running service.
 
-> **Cost.** The app scales to zero when idle, so an unused deployment is effectively free on the Consumption plan. The image lives in GitHub Container Registry, which is free for public packages. Still run [teardown](#6-teardown) when you finish.
+> **Cost.** The app scales to zero when idle, so an unused deployment is effectively free on the Consumption plan. The image lives in GitHub Container Registry, which is free for public packages. Still complete [Exercise 6](#exercise-6--remove-the-azure-resources) when you finish.
 
 ### Publish the image
 
@@ -149,7 +168,7 @@ azd provision
 
 azd prompts for a subscription and region the first time, then stores them. Re-running picks up the same environment — there is no resource group name to remember and no `<placeholder>` to substitute.
 
-**Verify:**
+### Check your work
 
 ```bash
 URL=$(azd env get-value CART_API_URL)
@@ -168,7 +187,7 @@ The first request after an idle period takes a few seconds. That is the cold sta
 
 > **The API has no authentication.** The IP restriction is the only thing in front of it. Do not put credentials or private data behind this deployment, and do not widen the CIDR to make a failing request succeed.
 
-## 6. Teardown
+## Exercise 6 — Remove the Azure resources
 
 Azure resources bill until removed. One command removes the resource group and everything azd created in it:
 
@@ -176,7 +195,7 @@ Azure resources bill until removed. One command removes the resource group and e
 azd down --purge --force
 ```
 
-**Verify:**
+### Check your work
 
 ```bash
 az group exists --name rg-gh600-lab
@@ -188,12 +207,12 @@ Expected: `false` once deletion completes.
 
 ---
 
-## If setup fails
+## Troubleshooting
 
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
 | `ModuleNotFoundError: No module named 'app'` | Not in the repository root | `cd` to the root and rerun |
-| `gh workflow list` shows nothing | Actions not enabled on the fork | Section 4 |
+| `gh workflow list` shows nothing | Actions not enabled on the fork | Exercise 4 |
 | `repository name must be lowercase` | Registry path built from a repo name containing capitals | Lowercase it with `tr '[:upper:]' '[:lower:]'` |
 | `azd provision` cannot find a parameter | `ALLOWED_IP_RANGE` or `CART_API_IMAGE` not set | `azd env get-values`, then `azd env set` the missing one |
 | Container app never becomes ready | Startup probe failing on `/healthz` | `az containerapp logs show`; usually the image was never published or the package is private |
@@ -201,7 +220,7 @@ Expected: `false` once deletion completes.
 
 ---
 
-## What you set up
+## Summary
 
 A fork you can commit to, a passing test command every later lab depends on, Actions enabled, and optionally a running cart API that serves the same code your tests cover.
 

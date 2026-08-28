@@ -1,8 +1,33 @@
 # Lab 04 — Perform Evaluation, Error Analysis, and Tuning (Domain 4)
 
-**Goal:** diagnose why an agent run failed, fix the right layer, and produce evidence a reviewer can check without having been there.
+## Introduction
 
-**You will create:**
+In this lab, you diagnose why an agent run failed, fix the correct layer, and produce evidence that a reviewer can check independently.
+
+**Estimated time:** 30 minutes
+
+**Microsoft Learn alignment:** [Memory, State, and Evaluation](https://learn.microsoft.com/en-us/training/modules/memory-state-evaluation/)
+
+## Learning objectives
+
+After completing this lab, you'll be able to:
+
+- Evaluate an agent run using multiple evidence signals.
+- Classify and prioritize agent failures.
+- Implement and test a corrective code change.
+- Tune repository instructions with a measurable rule.
+- Use a pull request as an independently reviewable evaluation report.
+
+## Prerequisites
+
+- Complete [Lab 03 — Memory, State & Execution](03-memory-state-execution.md).
+- Use a fork where you can create branches and pull requests.
+
+## Lab scenario
+
+An agent attempted to add loyalty discount support to the cart. Its code appeared successful locally but failed in CI and crossed repository boundaries. You must analyze the evidence, correct the implementation, tune the right control layer, and report the result.
+
+**Lab outputs:**
 
 | Step | Artifact | Purpose |
 | --- | --- | --- |
@@ -10,11 +35,7 @@
 | 4 | `.github/copilot-instructions.md` | One measurable instruction that prevents the failure |
 | 5 | A pull request on `agent/loyalty-discount` | The evaluation report itself |
 
-Steps 1 and 2 create nothing — they are the failure analysis the rest of the lab acts on.
-
-**Prerequisite:** [Lab 03](03-memory-state-execution.md) complete.
-
-**Time:** About 30 minutes
+Exercises 1 and 2 create nothing — they are the failure analysis the rest of the lab acts on.
 
 ---
 
@@ -36,7 +57,7 @@ The order runs from cheapest and most likely, to most expensive and least likely
 
 ---
 
-## Step 1 — Analyze the failed run
+## Exercise 1 — Analyze the failed run
 
 An agent was asked to add loyalty discount support to the cart. It produced code that passed on its own machine and failed in CI. Here is the record — read it as evidence, not as narrative.
 
@@ -124,7 +145,7 @@ Classify each finding. Use exactly one category per finding:
 
 </details>
 
-## Step 2 — Rank by severity, and justify the ranking
+## Exercise 2 — Rank findings by severity
 
 Order the six findings by severity, then answer:
 
@@ -143,7 +164,7 @@ The highest-leverage control is a path restriction preventing agents from editin
 
 ---
 
-## Step 3 — Do the change properly
+## Exercise 3 — Implement the change correctly
 
 **Update these files:** `app/cart.py` and `tests/test_cart.py`
 
@@ -160,7 +181,7 @@ Add loyalty discount support to `app/cart.py`, keeping every existing guard, and
 - a negative discount rejected with `ValueError`
 - a discount above `1.0` rejected with `ValueError`
 
-**Verify:**
+### Check your work
 
 ```bash
 python3 -m unittest discover -s tests
@@ -171,7 +192,7 @@ The test run must pass, and the changed-file list must contain only `app/cart.py
 
 ---
 
-## Step 4 — Tune the right layer
+## Exercise 4 — Tune the right layer
 
 **Update this file:** `.github/copilot-instructions.md`
 
@@ -181,7 +202,7 @@ Make it measurable. "Be careful with workflows" is not a rule — a reviewer can
 
 > **This is a sensitive-path change.** `.github/` is on your own sensitive list, so this edit needs reviewer attention — including when you are the one making it. Lab 06 builds the control that enforces this rather than requesting it.
 
-**Verify:**
+### Check your work
 
 ```bash
 test -s .github/copilot-instructions.md
@@ -192,7 +213,7 @@ Read your own diff and ask whether a reviewer could tell, from a future PR's cha
 
 ---
 
-## Step 5 — Open the pull request
+## Exercise 5 — Open the pull request
 
 Push the branch and open a PR. **The PR body is your evaluation report** — not a file in the repository.
 
@@ -239,7 +260,7 @@ Every **Evidence** cell takes something a reviewer can click or run — a workfl
 
 Two signals have no automated source in this repository: `Static checks` and `Security scan`. Write `not configured` rather than inventing a result, and note what you would add. **A signal you did not collect is not a signal that passed** — an evaluation that quietly omits its gaps is the same failure as a consolidated report that hides a crashed agent.
 
-**Verify:**
+### Check your work
 
 ```bash
 gh pr view --json statusCheckRollup --jq '.statusCheckRollup[] | "\(.name): \(.conclusion)"'
@@ -249,7 +270,7 @@ Both `Unit tests` and `Sensitive file scope check` should report `SUCCESS`.
 
 ---
 
-## Self-check
+## Knowledge check
 
 You completed the lab if you can explain:
 
@@ -261,7 +282,7 @@ You completed the lab if you can explain:
 
 ---
 
-## Exam notes
+## Exam preparation
 
 - Evaluation is broader than "tests passed." GH-600 expects plans, logs, traces, artifacts, workflow output, changed files, scans, and human review as evaluation signals.
 - **Model choice is step 7 of 7.** If an answer option proposes switching models before checking instructions, tool scope, or environment, it is wrong.
@@ -270,7 +291,7 @@ You completed the lab if you can explain:
 
 ---
 
-## What you built
+## Summary
 
 A classified failure analysis, a correct implementation on a branch, one measurable instruction change, and a pull request whose body is the evaluation report — with every signal backed by something a reviewer can independently check.
 

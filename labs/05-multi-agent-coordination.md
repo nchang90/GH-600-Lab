@@ -1,23 +1,46 @@
 # Lab 05 — Multi-Agent Coordination (Domain 5)
 
-**Goal:** run several specialized agents against the same change, keep their work isolated, and consolidate their findings into one reviewable artifact.
+## Introduction
 
-**You will create:**
+In this lab, you run several specialized agents against the same change, isolate their work, and consolidate their findings into one reviewable artifact.
+
+**Estimated time:** 40 minutes
+
+**Microsoft Learn alignment:** [Multi-Agent systems and orchestration](https://learn.microsoft.com/en-us/training/modules/multi-agent-systems-orchestration/)
+
+## Learning objectives
+
+After completing this lab, you'll be able to:
+
+- Select an appropriate multi-agent coordination pattern.
+- Run specialist reviews in parallel and in isolation.
+- Preserve partial results when one agent fails.
+- Consolidate findings into a single auditable report.
+- Distinguish an agent with no findings from an agent that did not run.
+- Diagnose conflicts and recover safely from degraded multi-agent execution.
+
+## Prerequisites
+
+- Complete [Lab 02a — Build Custom Agents](02a-custom-agents.md).
+- Complete [Lab 04 — Perform Evaluation, Error Analysis, and Tuning](04-evaluation-error-analysis-tuning.md).
+- Keep the Lab 04 pull request open for review.
+
+## Lab scenario
+
+The loyalty discount pull request now needs review from testing, security, and general code-review specialists. You must coordinate those reviews without shared mutable state and retain useful evidence even when one specialist fails.
+
+**Lab outputs:**
 
 | Step | File | Purpose |
 | --- | --- | --- |
 | 2 | `.github/workflows/agent-evaluation.yml` | Parallel agent review jobs |
 | 3 | `.github/workflows/agent-evaluation.yml` | A consolidation job that depends on them |
 
-Steps 1 and 4 create nothing — they are the pattern choice and the conflict policy that justify the workflow.
-
-**Prerequisite:** [Lab 02a](02a-custom-agents.md) (the four agents) and [Lab 04](04-evaluation-error-analysis-tuning.md) (an open pull request to review).
-
-**Time:** About 40 minutes
+Exercises 1 and 4 create nothing — they are the pattern choice and the conflict policy that justify the workflow.
 
 ---
 
-## Step 1 — Choose the pattern
+## Exercise 1 — Choose the coordination pattern
 
 Four patterns are available. Pick one for the loyalty discount PR from Lab 04, and be able to defend it:
 
@@ -34,7 +57,7 @@ The property that makes parallelism safe here is that two of the three agents ca
 
 ---
 
-## Step 2 — Add the parallel review jobs
+## Exercise 2 — Add the parallel review jobs
 
 **Update this file:** `.github/workflows/agent-evaluation.yml`
 
@@ -80,7 +103,7 @@ Add three jobs that run alongside the existing `test` and `scope-check`:
           retention-days: 7
 ```
 
-## Step 3 — Add the consolidation job
+## Exercise 3 — Add the consolidation job
 
 **Update this file:** `.github/workflows/agent-evaluation.yml`
 
@@ -128,7 +151,7 @@ Append one more job:
           retention-days: 30
 ```
 
-**Verify:**
+### Check your work
 
 ```bash
 python3 - <<'EOF'
@@ -149,7 +172,7 @@ Each assertion maps to one thing that breaks without it: cancelled siblings, a s
 
 ---
 
-## Step 4 — Handle conflicts and degraded behaviour
+## Exercise 4 — Handle conflicts and degraded behavior
 
 Multi-agent work fails in predictable ways. Decide, in advance, what happens for each:
 
@@ -180,7 +203,7 @@ Two are worth thinking through carefully.
 
 **The human disagreeing with a unanimous pass.** If your answer is "the agents were wrong," ask what changes as a result — a checklist item, an instruction, a new agent. An evaluation that produces no change to the system is an opinion, not a signal.
 
-**Verify:**
+### Check your work
 
 ```bash
 python3 -c "import yaml,sys; yaml.safe_load(open('.github/workflows/agent-evaluation.yml'))" \
@@ -196,11 +219,13 @@ grep -q "upload-artifact" .github/workflows/agent-evaluation.yml \
   && echo "PASS: handoff goes through an artifact"
 ```
 
-**Behavioural test:** push a commit to the Lab 04 branch and open the workflow run. You should see three `Agent review` jobs on separate runners, then one `Consolidate findings` job. Download `consolidated-review` and confirm it names all three agents.
+### Check the result
+
+Push a commit to the Lab 04 branch and open the workflow run. You should see three `Agent review` jobs on separate runners, then one `Consolidate findings` job. Download `consolidated-review` and confirm it names all three agents.
 
 ---
 
-## Self-check
+## Knowledge check
 
 You completed the lab if you can explain:
 
@@ -212,7 +237,7 @@ You completed the lab if you can explain:
 
 ---
 
-## Exam notes
+## Exam preparation
 
 - Multi-agent execution is not "running many agents at once." GH-600 emphasizes isolation, observability, conflict detection, auditability, and safe lifecycle management.
 - **Jobs share nothing.** Data moves between them through artifacts or `$GITHUB_OUTPUT`. Any answer proposing shared memory or conversation between jobs is wrong.
@@ -254,7 +279,7 @@ A consolidated report that silently omits a crashed agent looks identical to one
 
 ---
 
-## What you built
+## Summary
 
 A workflow that runs three agents in isolation on the same diff, keeps every agent's output when one fails, and consolidates the results into a single artifact that distinguishes a clean review from a missing one.
 

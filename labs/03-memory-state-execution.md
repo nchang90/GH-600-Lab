@@ -1,12 +1,32 @@
 # Lab 03 — Memory, State & Execution (Domain 3)
 
-**Goal:** understand where agent state actually lives, how a session is resumed, and which storage mechanism fits each kind of state.
+## Introduction
 
-**You will create:** nothing. This lab is analysis and judgement — the concepts it establishes are applied directly in Labs 04 and 05.
+In this lab, you analyze where agent state lives, how a session is resumed, and which storage mechanism fits each kind of state.
 
-**Prerequisite:** [Lab 02b](02b-tools-mcp-environments.md) complete.
+**Estimated time:** 40 minutes
 
-**Time:** ~40 minutes
+**Microsoft Learn alignment:** [Memory, State, and Evaluation](https://learn.microsoft.com/en-us/training/modules/memory-state-evaluation/)
+
+## Learning objectives
+
+After completing this lab, you'll be able to:
+
+- Distinguish session state, durable artifacts, repository memory, and Copilot Memory.
+- Identify new and resumed sessions from an execution log.
+- Select an appropriate storage mechanism for agent state.
+- Revalidate state when work moves between environments.
+- Recognize and correct context drift.
+
+## Prerequisites
+
+- Complete [Lab 02b — Tools, MCP, and Environments](02b-tools-mcp-environments.md).
+
+## Lab scenario
+
+An agent task may move between sessions, machines, runners, and team members. You need to decide what can remain in session context, what must become a durable artifact, and what must be revalidated before execution continues.
+
+**Lab output:** No files are created. This lab develops analysis and judgment that you apply directly in Labs 04 and 05.
 
 ---
 
@@ -28,7 +48,7 @@
 
 ---
 
-## Task 1 — Read a session log
+## Exercise 1 — Read a session log
 
 Read the log and answer the questions below.
 
@@ -57,7 +77,7 @@ Read the log and answer the questions below.
 
 </details>
 
-## Task 2 — Match each scenario to the right storage
+## Exercise 2 — Match each scenario to the right storage
 
 Write the matching letter (A–E) next to each number.
 
@@ -82,7 +102,7 @@ Write the matching letter (A–E) next to each number.
 
 </details>
 
-## Task 3 — Inspect your own Copilot Memory
+## Exercise 3 — Inspect your own Copilot Memory
 
 This one is hands-on, and it takes two minutes.
 1. Open **[github.com/settings/copilot/memory](https://github.com/settings/copilot/memory)**.
@@ -109,7 +129,7 @@ This one is hands-on, and it takes two minutes.
 
 ---
 
-## Task 4 — Carry state across tools and environments
+## Exercise 4 — Carry state across tools and environments
 
 The same task often moves between your IDE, Copilot CLI, and the cloud agent running in Actions. Each is a different machine with different context.
 
@@ -169,7 +189,7 @@ What works: start a fresh session, and put the important facts somewhere durable
 
 ---
 
-## Self-check
+## Knowledge check
 
 You completed the lab if you can answer without looking:
 
@@ -183,7 +203,7 @@ You completed the lab if you can answer without looking:
 
 ---
 
-## Exam notes
+## Exam preparation
 
 ### Paths to memorize
 
@@ -231,7 +251,7 @@ Infer the level from the tools that appear:
 
 ---
 
-## What you learned
+## Summary
 
 Where agent state actually lives, how to read a session log for session type and autonomy level, which storage mechanism fits each need, and where Copilot Memory sits between session context and repository instructions. Exercise 5 applies this directly: the multi-agent pipeline passes every handoff through workflow artifacts, for exactly the reasons established here.
 

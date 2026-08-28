@@ -1,8 +1,35 @@
 # Lab 06 — Guardrails & Accountability
 
-**Goal:** build controls that hold when an agent tries to do something it should not, and understand which layer of the stack each control belongs to.
+## Introduction
 
-**You will create:**
+In this lab, you build controls that apply when an agent attempts a prohibited action and identify which layer of the stack should enforce each control.
+
+**Estimated time:** 45 minutes
+
+**Microsoft Learn alignment:** [Governance, guardrails, and operations](https://learn.microsoft.com/en-us/training/modules/governance-guardrails-operations/)
+
+## Learning objectives
+
+After completing this lab, you'll be able to:
+
+- Configure preventive and detective agent hooks.
+- Deny dangerous shell commands before execution.
+- Record file edits for audit and drift detection.
+- Request evidence and scope details in pull requests.
+- Define a governance review cadence for agent controls.
+- Match common risks to the correct enforcement layer.
+- Define risk-based autonomy and human approval gates for high-risk actions.
+- Apply least-privilege GitHub controls to agent workflows.
+
+## Prerequisites
+
+- Complete [Lab 05 — Multi-Agent Coordination](05-multi-agent-coordination.md).
+
+## Lab scenario
+
+Your multi-agent workflow can now review changes, but the repository still needs controls that prevent unsafe actions, record agent activity, and keep governance rules current as agents and workflows evolve.
+
+**Lab outputs:**
 
 | Step | File | Purpose |
 | --- | --- | --- |
@@ -12,13 +39,9 @@
 | 4 | `.github/PULL_REQUEST_TEMPLATE.md` | Evidence and scope, requested at PR time |
 | 5 | — | A governance review cadence and drift checklist |
 
-**Prerequisite:** [Lab 05](05-multi-agent-coordination.md) complete.
-
-**Time:** About 45 minutes
-
 ---
 
-## Step 1 — Hook configuration
+## Exercise 1 — Configure the hook
 
 **Create this file:** `.github/hooks/pre-tool-policy.json`
 
@@ -46,7 +69,7 @@
 }
 ```
 
-## Step 2 — The policy script
+## Exercise 2 — Create the policy script
 
 **Create this file:** `.github/hooks/scripts/pre-tool-policy.sh`
 
@@ -95,7 +118,7 @@ Make it executable:
 chmod +x .github/hooks/scripts/pre-tool-policy.sh
 ```
 
-## Step 3 — The post-edit hook
+## Exercise 3 — Create the post-edit hook
 
 **Create this file:** `.github/hooks/scripts/post-edit-check.sh`
 
@@ -122,7 +145,7 @@ This is a detective control, and also a nudge: reminding the agent to run tests 
 
 ---
 
-## Step 4 — Add a pull request template
+## Exercise 4 — Add a pull request template
 
 **Create this file:** `.github/PULL_REQUEST_TEMPLATE.md`
 
@@ -157,7 +180,7 @@ Hooks stop actions. Rulesets block merges. A template does neither — it change
 
 The checkbox that matters most is "no existing test or validation guard was removed." That is the failure Lab 04 analysed, it passed CI, and no automated control caught it — because the agent deleted the test that would have.
 
-**Verify:**
+### Check your work
 
 ```bash
 test -s .github/PULL_REQUEST_TEMPLATE.md && echo "PASS: template present"
@@ -167,7 +190,7 @@ gh pr create --title "test" --body "" --dry-run 2>/dev/null | head -5 || \
 
 ---
 
-## Step 5 — Set a governance review cadence
+## Exercise 5 — Set a governance review cadence
 
 No file to create. Controls decay. Checks get renamed, CODEOWNERS entries point at people who left, permissions widen one PR at a time, and secrets migrate to broader scopes. None of that trips an alarm.
 
@@ -216,9 +239,9 @@ Match each anti-pattern to the control that mitigates it:
 
 ### Prevent ambiguity before execution
 
-If a task cannot be defined precisely, it should not run autonomously. Before assigning work to an agent, the brief needs acceptance criteria, constraints and **non-goals**, the specific paths in scope, and the validation expected. You built most of that in Lab 01 Step 2 — add a `## Non-goals` section to `agent-task-brief.md` now, because what an agent must *not* do is the part briefs usually omit.
+If a task cannot be defined precisely, it should not run autonomously. Before assigning work to an agent, the brief needs acceptance criteria, constraints and **non-goals**, the specific paths in scope, and the validation expected. You built most of that in Lab 01 Exercise 2 — add a `## Non-goals` section to `agent-task-brief.md` now, because what an agent must *not* do is the part briefs usually omit.
 
-**Verify:**
+### Check your work
 
 ```bash
 grep -q "## Non-goals" agent-task-brief.md \
@@ -227,7 +250,7 @@ grep -q "## Non-goals" agent-task-brief.md \
 
 ---
 
-## Task — Match each scenario to its control
+## Exercise 6 — Match each scenario to its control
 
 | # | Scenario |
 | --- | --- |
@@ -290,7 +313,7 @@ This works because the hook contract is just stdin and stdout — the script is 
 
 ---
 
-## Self-check
+## Knowledge check
 
 You completed the lab if you can explain:
 
@@ -305,7 +328,7 @@ You completed the lab if you can explain:
 
 ---
 
-## Exam notes
+## Exam preparation
 
 ### Control categories
 
@@ -372,7 +395,7 @@ When Copilot pushes workflow changes to a PR and the workflows do not run, the f
 
 ---
 
-## What you built
+## Summary
 
 A preventive layer that blocks dangerous commands before they execute, a detective layer that records edits for audit, and a clear model of which control belongs where.
 

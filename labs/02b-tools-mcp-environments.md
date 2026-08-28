@@ -1,8 +1,34 @@
 # Lab 02b — Tools, MCP, and Environments (Domain 2)
 
-**Goal:** connect the agents to external tools, bound the environment they run in, and run one on GitHub's infrastructure.
+## Introduction
 
-**You will create:**
+In this lab, you connect agents to external tools, define execution boundaries, configure a cloud-agent environment, and author an agentic workflow.
+
+**Estimated time:** 30 minutes
+
+**Microsoft Learn alignment:** [Tooling, MCP, and Agent Execution Environments](https://learn.microsoft.com/en-us/training/modules/agent-tooling-mcp-execution-environments/)
+
+## Learning objectives
+
+After completing this lab, you'll be able to:
+
+- Configure read-only MCP servers for a repository.
+- Distinguish documented restrictions from enforced restrictions.
+- Define boundaries that an agent cannot widen.
+- Configure and run a GitHub Copilot cloud agent.
+- Author and validate an agentic workflow with safe outputs.
+- Identify branch, pull request, and environment protections that limit execution.
+
+## Prerequisites
+
+- Complete [Lab 02a — Build Custom Agents](02a-custom-agents.md).
+- Retain the task brief from [Lab 01 — Prepare Agent Architecture](01-agent-architecture-sdlc.md).
+
+## Lab scenario
+
+The custom agents now need external context and a repeatable execution environment. You must connect those capabilities without granting unnecessary write access or allowing the agent to redefine its own boundaries.
+
+**Lab outputs:**
 
 | Step | File | Purpose |
 | --- | --- | --- |
@@ -11,13 +37,9 @@
 | 3 | `.github/workflows/copilot-setup-steps.yml` | Cloud-agent environment, then run the agent |
 | 4 | `.github/workflows/test-coverage-review.md` | An agentic workflow |
 
-**Prerequisite:** [Lab 02a](02a-custom-agents.md) — the four agents — and [Lab 01](01-agent-architecture-sdlc.md) for the task brief.
-
-**Time:** About 30 minutes
-
 ---
 
-## Step 1 — Configure MCP servers
+## Exercise 1 — Configure MCP servers
 
 **Create this file:** `.vscode/mcp.json`
 
@@ -71,7 +93,8 @@ Compare your config against the fuller design in [tools/mcp.allow-list.example.j
 
 Fill in the last row. There is no approval concept anywhere in `.mcp.json` — it exists in your design document and in no configuration you have written. Name the control that actually implements it. Lab 06 builds it; this is the gap it fills.
 
-**Verify:** a wrong top-level key fails silently — the server simply never loads, with no error.
+> [!NOTE]
+> A wrong top-level key fails silently. The server simply never loads, and no error is shown.
 
 ```bash
 python3 - <<'EOF'
@@ -92,7 +115,7 @@ Ask an agent to merge a pull request through MCP. It should report that no such 
 
 ---
 
-## Step 2 — Define execution boundaries
+## Exercise 2 — Define execution boundaries
 
 **Update this file:** `agent-task-brief.md`
 
@@ -116,7 +139,7 @@ State that explicitly in the brief. "Do not modify a boundary in order to satisf
 
 ---
 
-## Step 3 — Run the cloud agent
+## Exercise 3 — Run the cloud agent
 
 **Review this file:** `.github/workflows/copilot-setup-steps.yml`
 
@@ -160,7 +183,7 @@ gh agent-task list
 
 ---
 
-## Step 4 — Author an agentic workflow
+## Exercise 4 — Author an agentic workflow
 
 **Create this file:** `.github/workflows/test-coverage-review.md`
 
@@ -207,7 +230,7 @@ That is the point of `safe-outputs`. Write actions do not come from the token th
 
 This is the same principle as the tool lists in Lab 02a, applied to outputs rather than inputs: **the declaration is the enforcement, not the instruction in the body.**
 
-**Verify:**
+### Check your work
 
 ```bash
 gh extension install github/gh-aw   # once
@@ -227,7 +250,7 @@ gh aw add-wizard githubnext/agentics/daily-repo-status
 gh aw status
 ```
 
-Apply the same scrutiny you gave the MCP allow-list in Step 1: **read the `tools:` and `safe-outputs:` blocks before compiling.** An installed workflow runs with whatever permissions and write actions its author declared, in your repository. `gh aw validate` tells you it is well-formed — it does not tell you it is safe for you.
+Apply the same scrutiny you gave the MCP allow-list in Exercise 1: **read the `tools:` and `safe-outputs:` blocks before compiling.** An installed workflow runs with whatever permissions and write actions its author declared, in your repository. `gh aw validate` tells you it is well-formed — it does not tell you it is safe for you.
 
 ```bash
 gh aw validate
@@ -242,11 +265,13 @@ grep -qE "^\s+contents: write" .github/workflows/test-coverage-review.md \
 
 `gh aw validate` compiles the frontmatter and reports errors without writing a lock file — run it before every commit.
 
-**Behavioural test:** run it with `gh aw run test-coverage-review`, then check the issue it opened. The issue is authored by the workflow, not by you — which is the attribution question Lab 01 Step 3 asked you to trace.
+### Check the result
+
+Run the workflow with `gh aw run test-coverage-review`, then check the issue it opened. The issue is authored by the workflow, not by you — which is the attribution question Lab 01 Exercise 3 asked you to trace.
 
 ---
 
-## Self-check
+## Knowledge check
 
 You completed the lab if you can explain:
 
@@ -258,7 +283,7 @@ You completed the lab if you can explain:
 
 ---
 
-## Exam notes
+## Exam preparation
 
 - GH-600 questions in this domain combine tool choice with execution scope. The best answer separates tool selection, approval, and execution boundaries.
 - Watch for answers that grant broad permissions, bypass pull requests, expose secrets, or let agents modify governance files without review.
@@ -300,7 +325,7 @@ You completed the lab if you can explain:
 
 ---
 
-## What you built
+## Summary
 
 A read-only MCP configuration, a seventh execution boundary, a cloud-agent environment you ran real work in, and an agentic workflow.
 

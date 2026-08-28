@@ -1,8 +1,31 @@
 # Lab 02a — Build Custom Agents (Domain 2)
 
-**Goal:** build four agents whose capabilities differ on purpose, so that the tool list — not the prompt — is what bounds each one.
+## Introduction
 
-**You will create:**
+In this lab, you build four custom agents whose capabilities differ on purpose. Each agent receives only the tools required for its role, so capability boundaries are enforced by configuration rather than prompt wording.
+
+**Estimated time:** 25 minutes
+
+**Microsoft Learn alignment:** [Tooling, MCP, and Agent Execution Environments](https://learn.microsoft.com/en-us/training/modules/agent-tooling-mcp-execution-environments/) and the custom-agent exercise in [Multi-Agent systems and orchestration](https://learn.microsoft.com/en-us/training/modules/multi-agent-systems-orchestration/)
+
+## Learning objectives
+
+After completing this lab, you'll be able to:
+
+- Define custom agents with YAML frontmatter and focused instructions.
+- Apply least privilege to agent tool lists.
+- Separate review, test execution, security analysis, and orchestration roles.
+- Explain how agent descriptions support delegation.
+
+## Prerequisites
+
+- Complete [Lab 01 — Prepare Agent Architecture](01-agent-architecture-sdlc.md).
+
+## Lab scenario
+
+Your repository needs specialized agents for review, testing, security scanning, and coordination. You must ensure that each agent can perform its job without receiving unrelated write or execution capabilities.
+
+**Lab outputs:**
 
 | Step | File | Tools |
 | --- | --- | --- |
@@ -11,13 +34,9 @@
 | 3 | `.github/agents/security-scanner.agent.md` | `read`, `search`, `execute` |
 | 4 | `.github/agents/orchestrator.agent.md` | `read`, `search`, `agent` |
 
-**Prerequisite:** [Lab 01](01-agent-architecture-sdlc.md) complete.
+## Agent file format
 
-**Time:** About 25 minutes
-
-## Agent file
-
-Every file in `.github/agents/` has YAML frontmatter — `name`, `description`, `tools` — and a markdown body that becomes the agent's system prompt. Step 1 shows a complete one.
+Every file in `.github/agents/` has YAML frontmatter — `name`, `description`, `tools` — and a markdown body that becomes the agent's system prompt. Exercise 1 shows a complete one.
 
 **`description` is the field that matters most.** A coordinating agent reads it when deciding whether to delegate, so write it as *when you would use this*, not *what this is*.
 
@@ -34,7 +53,7 @@ Every file in `.github/agents/` has YAML frontmatter — `name`, `description`, 
 
 ---
 
-## Step 1 — The reviewer agent (low autonomy)
+## Exercise 1 — Create the reviewer agent
 
 **Create this file:** `.github/agents/reviewer.agent.md`
 
@@ -72,7 +91,7 @@ You are a read-only code reviewer for this repository.
 
 ---
 
-## Step 2 — The test-runner agent (medium autonomy)
+## Exercise 2 — Create the test-runner agent
 
 **Create this file:** `.github/agents/test-runner.agent.md`
 
@@ -116,7 +135,7 @@ Run from the repository root. The tests import `app.cart`, which resolves only f
 
 ---
 
-## Step 3 — The security-scanner agent
+## Exercise 3 — Create the security-scanner agent
 
 **Create this file:** `.github/agents/security-scanner.agent.md`
 
@@ -149,7 +168,7 @@ You are the security analysis agent for this repository.
 
 ````
 
-## Step 4 — The orchestrator agent
+## Exercise 4 — Create the orchestrator agent
 
 **Create this file:** `.github/agents/orchestrator.agent.md`
 
@@ -188,7 +207,7 @@ You are the coordination agent for this repository.
 
 ---
 
-## Self-check
+## Knowledge check
 
 You completed the lab if you can explain:
 
@@ -199,7 +218,7 @@ You completed the lab if you can explain:
 
 ---
 
-## Exam notes
+## Exam preparation
 
 - **Instructions guide; tool lists enforce.** If a question asks how you *guarantee* a capability is absent, the answer is never "tell the agent not to."
 - `description` is the field a delegating agent reads. A vague description is why an orchestrator picks the wrong specialist.
@@ -208,7 +227,7 @@ You completed the lab if you can explain:
 
 ---
 
-## What you built
+## Summary
 
 Four agents forming a deliberate capability ladder, each bounded by its tool list rather than by its prompt.
 

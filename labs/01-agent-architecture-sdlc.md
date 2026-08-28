@@ -1,8 +1,34 @@
 # Lab 01 — Prepare Agent Architecture (Domain 1)
 
-**Goal:** Give every agent that works in this repository a shared, written understanding of the repository, its working rules, and its safety boundaries.
+## Introduction
 
-**You will create:**
+In this lab, you give every agent a shared, written understanding of the repository, its working rules, and its safety boundaries. You then trace how agent intent and actions become reviewable through GitHub.
+
+**Estimated time:** 25 minutes
+
+**Microsoft Learn alignment:** [Foundations of Agentic AI in GitHub](https://learn.microsoft.com/en-us/training/modules/foundations-agentic-ai/) and [Designing Agent Architecture and SDLC Integration](https://learn.microsoft.com/en-us/training/modules/design-agent-architecture-integration/)
+
+## Learning objectives
+
+After completing this lab, you'll be able to:
+
+- Define repository-wide instructions for coding agents.
+- Specify task inputs, outputs, success criteria, and execution boundaries.
+- Map the plan, act, and evaluate lifecycle to GitHub artifacts.
+- Distinguish an autonomous agent from an AI assistant.
+- Apply GitHub's contributor model to agent-generated work.
+- Distinguish attribution from task intent in an audit trail.
+
+## Prerequisites
+
+- Complete [Lab 00 — Lab Preparation](00-lab-preparation.md).
+- Confirm that the repository test command passes.
+
+## Lab scenario
+
+Your team is introducing coding agents into an existing cart application. Before an agent can make a safe change, it needs durable repository context, a bounded task brief, and an evidence trail that reviewers can inspect.
+
+**Lab outputs:**
 
 | Step | File | Purpose |
 | --- | --- | --- |
@@ -10,13 +36,9 @@
 | 2 | `agent-task-brief.md` | A brief with inputs, outputs, success criteria, and boundaries |
 | 3 | — | Map the agent lifecycle onto the GitHub surfaces that record it |
 
-**Prerequisite:** [Lab 00](00-lab-preparation.md) complete — the test command must pass before an instruction file can name it.
-
-**Time:** About 25 minutes
-
 ---
 
-## Step 1 — Create the repository instructions file
+## Exercise 1 — Create the repository instructions file
 
 **Create this file:** `.github/copilot-instructions.md`
 
@@ -59,7 +81,7 @@ python3 -m unittest discover -s tests
 - Keep every change reviewable through the repository's governed development workflow.
 ````
 
-**Verify:**
+### Check your work
 
 ```bash
 test -s .github/copilot-instructions.md \
@@ -77,7 +99,7 @@ Use `test -s`, not `test -f`. An empty file passes `-f` and is the most common w
 
 ---
 
-## Step 2 — Define inputs, outputs, and success criteria
+## Exercise 2 — Define inputs, outputs, and success criteria
 
 **Create this file:** `agent-task-brief.md`
 
@@ -146,7 +168,7 @@ A brief is what turns "add a discount" into something an agent can be held to. C
 
 Every success criterion is a command or an observable fact. "Works correctly" is not one, because nothing can check it — and an agent optimising against an uncheckable target reports success it cannot support.
 
-**Verify:**
+### Check your work
 
 ```bash
 python3 - <<'EOF'
@@ -161,7 +183,7 @@ EOF
 
 ---
 
-## Step 3 — Trace the agent lifecycle through GitHub
+## Exercise 3 — Trace the agent lifecycle through GitHub
 
 No file to create. Agent work is only governable if each stage of it lands somewhere a human can inspect. Run these against your own fork and record which surface holds which evidence:
 
@@ -184,7 +206,7 @@ Then complete the table:
 
 | Stage | Produces | Surface |
 | --- | --- | --- |
-| **Plan** | Intent and scope | The issue, and the task brief from Step 3 |
+| **Plan** | Intent and scope | The issue, and the task brief from Exercise 3 |
 | **Act** | The change | A branch and its commits, then the pull request |
 | **Evaluate** | Evidence | Check runs, workflow logs, uploaded artifacts, and review events |
 
@@ -206,7 +228,7 @@ An agent-generated commit should carry a `Co-authored-by` trailer naming the age
 
 ---
 
-## Self-check
+## Knowledge check
 
 You completed the lab if your instructions answer these questions:
 
@@ -218,7 +240,7 @@ You completed the lab if your instructions answer these questions:
 
 ---
 
-## Exam notes
+## Exam preparation
 
 - **An assistant suggests; an agent acts.** The distinction is not model capability, it is whether output reaches the repository without a human keystroke in between. Everything in these labs exists because the second kind needs boundaries the first does not.
 - **GitHub is the system of record and the control plane.** Branches, pull requests, checks, logs, and review events are where agent work becomes reviewable. Chat history is none of those.
@@ -234,7 +256,7 @@ You completed the lab if your instructions answer these questions:
 
 ---
 
-## What you built
+## Summary
 
 You created one repository-level instruction file that gives agents shared architecture, conventions, testing, and security guidance.
 

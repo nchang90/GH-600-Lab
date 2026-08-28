@@ -1,14 +1,19 @@
 # GH-600 Agentic Developer Study Lab
 
-Self-paced, step-by-step labs for turning a conventional repository into a governed agentic one. Each lab tells you exactly which file to create, what to put in it, why that file exists, how to verify it, and what the exam expects you to remember.
+Self-paced, Microsoft Learn-style guided labs for turning a conventional repository into a governed agentic one. Each lab includes an introduction, learning objectives, prerequisites, a scenario, task-focused exercises, checks, exam preparation, and a summary.
 
 Official study guide: <https://learn.microsoft.com/en-gb/credentials/certifications/resources/study-guides/gh-600>
+
+Official learning paths:
+
+- [Developing in Agentic AI Systems Part 1 of 2](https://learn.microsoft.com/en-us/training/paths/gh-developing-agentic-systems-1/)
+- [Developing in Agentic AI Systems Part 2 of 2](https://learn.microsoft.com/en-us/training/paths/github-agentic-systems-part-two/github-agentic-systems-part-two)
 
 ## At a glance
 
 - **Total duration:** about 4 hours 25 minutes, including preparation.
 - **Environment:** your own fork, plus optional Azure resources for one exercise.
-- **Estimated cost:** effectively free. The optional deployment scales to zero when idle and the image lives in GitHub Container Registry, which is free for public packages. [Tear down](labs/00-lab-preparation.md#6-teardown) when you finish regardless.
+- **Estimated cost:** effectively free. The optional deployment scales to zero when idle and the image lives in GitHub Container Registry, which is free for public packages. Complete [Lab 00, Exercise 6](labs/00-lab-preparation.md#exercise-6--remove-the-azure-resources) when you finish regardless.
 
 ## Labs
 
@@ -26,6 +31,19 @@ Work through them in order — each builds on the last.
 | [06 — Guardrails & Accountability](labs/06-guardrails-accountability.md) | 6 | ~45 min | Preventive hooks and an audit trail |
 
 Lab 03 creates no files. It covers judgement the exam tests through log reading and scenario matching, and the concepts it establishes are applied directly in Labs 04 and 05.
+
+## Microsoft Learn curriculum alignment
+
+These guided labs turn the six official Microsoft Learn modules into one continuous repository project. Some modules are split into multiple labs so each exercise remains focused and independently verifiable.
+
+| Microsoft Learn module | Guided lab |
+| --- | --- |
+| [Foundations of Agentic AI in GitHub](https://learn.microsoft.com/en-us/training/modules/foundations-agentic-ai/) | Lab 01 lifecycle and traceability exercises |
+| [Designing Agent Architecture and SDLC Integration](https://learn.microsoft.com/en-us/training/modules/design-agent-architecture-integration/) | Lab 01 |
+| [Tooling, MCP, and Agent Execution Environments](https://learn.microsoft.com/en-us/training/modules/agent-tooling-mcp-execution-environments/) | Labs 02a and 02b |
+| [Multi-Agent systems and orchestration](https://learn.microsoft.com/en-us/training/modules/multi-agent-systems-orchestration/) | Lab 02a custom-agent setup and Lab 05 orchestration |
+| [Memory, State, and Evaluation](https://learn.microsoft.com/en-us/training/modules/memory-state-evaluation/) | Labs 03 and 04 |
+| [Governance, guardrails, and operations](https://learn.microsoft.com/en-us/training/modules/governance-guardrails-operations/) | Lab 06 |
 
 ## What you end up with
 
@@ -60,17 +78,19 @@ Lab 03 creates no files. It covers judgement the exam tests through log reading 
 
 ## How to use these guides
 
-Start with [Lab 00](labs/00-lab-preparation.md). Every file-producing step ends with a **Verify** block — do not move on until it passes.
+Start with [Lab 00](labs/00-lab-preparation.md). Work through each numbered exercise in order, and do not continue until its **Check your work** instructions pass.
 
 Verify with `test -s` rather than `test -f`. Creating a file in an editor does not write it to disk until you save, and `-f` passes on an empty file, which is the most common way to lose time in this lab.
 
 ## Conventions used in these guides
 
+- **Lab scenario** — the role and problem that frame the exercises.
+- **Learning objectives** — the skills you should gain from the lab.
 - **Create this file** — a file you must add to the repository.
-- **Why this shape** — the reasoning behind the step.
-- **Verify** — a command that proves the step worked.
-- **Behavioural test** — a check that the artifact actually changed agent behaviour.
-- **Exam notes** — facts that are commonly tested.
+- **Why this shape** — the reasoning behind the exercise.
+- **Check your work** — commands or observations that prove the exercise worked.
+- **Knowledge check** — questions that confirm you understand the design choices.
+- **Exam preparation** — facts and distinctions that are commonly tested.
 
 ## Validate locally
 
@@ -82,7 +102,7 @@ python3 -m unittest discover -s tests
 
 [Lab 02b](labs/02b-tools-mcp-environments.md) reasons about a real deployment and the network boundary around it. The template is the teaching material — you can answer every question in that lab by reading [infra/resources.bicep](infra/resources.bicep) without deploying anything.
 
-Deploy if you want Lab 04's evidence chain to reach a running service. [Lab 00, section 5](labs/00-lab-preparation.md#5-deploy-the-cart-api-optional) has the procedure, including [teardown](labs/00-lab-preparation.md#6-teardown).
+Deploy if you want Lab 04's evidence chain to reach a running service. [Lab 00, Exercise 5](labs/00-lab-preparation.md#exercise-5--deploy-the-cart-api-optional) has the procedure, including [resource removal](labs/00-lab-preparation.md#exercise-6--remove-the-azure-resources).
 
 The deployment ships the same `app/cart.py` your tests cover:
 
