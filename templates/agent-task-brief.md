@@ -1,31 +1,14 @@
 # Agent Task Brief
 
-## Business intent
-
-## User story
-
 ## Inputs
-
-## Allowed files
-
-## Out-of-scope files
 
 ## Expected outputs
 
 ## Success criteria
 
-## Non-goals
-
 ## Constraints
 
 ## Execution boundaries
-
-- Reach the cart API and MCP tools only through the endpoints named in this brief.
-- Do not change `allowedIpAddressRange`, ingress settings, or probe configuration in `infra/resources.bicep` as part of a task.
-- Do not replace `cartApiImage` with a moving tag; the deployed build must stay identifiable.
-- Do not add environment variables or secrets to the container definition.
-- Treat `infra/` as sensitive, the same as `.github/` and `tools/`.
-
 
 ### Repository scope
 
@@ -62,11 +45,5 @@
 - Use only the secrets and variables named in this brief.
 - Do not read, print, copy, or invent secret values.
 - Do not add new secrets or variables unless the brief explicitly allows it.
-
-## Validation commands
-
-## Required artifacts
-
-## Resume and context check
 
 ## Approval gate
