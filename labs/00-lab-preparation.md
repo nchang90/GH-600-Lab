@@ -168,14 +168,6 @@ The first request after an idle period takes a few seconds. That is the cold sta
 
 > **The API has no authentication.** The IP restriction is the only thing in front of it. Do not put credentials or private data behind this deployment, and do not widen the CIDR to make a failing request succeed.
 
-### Why azd rather than `az deployment group create`
-
-azd owns the environment, not just one deployment. It creates the resource group, tags everything with `azd-env-name`, stores your parameters, and tears the whole thing down with one command. The `az` route needed a resource group created by hand, a parameter passed on every invocation, and a teardown that deleted the group by name — three chances to get it wrong.
-
-What azd is **not** doing here is building the image. `azure.yaml` deliberately has no `services:` block, because a service with a Docker host makes azd provision an Azure Container Registry, and ACR Basic bills monthly whether or not you pull from it. GitHub Actions and ghcr.io do that part for free.
-
----
-
 ## 6. Teardown
 
 Azure resources bill until removed. One command removes the resource group and everything azd created in it:

@@ -1,4 +1,4 @@
-# lab Agent
+# Exam Agent
 
 ## Purpose
 

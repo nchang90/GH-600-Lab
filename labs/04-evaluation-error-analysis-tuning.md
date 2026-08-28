@@ -18,14 +18,6 @@ Steps 1 and 2 create nothing — they are the failure analysis the rest of the l
 
 ---
 
-## Why this lab comes fourth
-
-When someone asks whether an agent is working well, the tempting answer is an impression — the output looked thorough, the reasoning seemed sound. That is not evaluation.
-
-Evaluation means evidence: test results, scan findings, status checks, uploaded artifacts, session logs. Each is independently checkable by someone who was not there. This lab is deliberately not a document-writing exercise, because a write-up nobody can verify is the exact failure mode Domain 4 is about.
-
----
-
 ## The tuning order
 
 When an agent misbehaves, work through the layers in this order:
@@ -131,12 +123,6 @@ Classify each finding. Use exactly one category per finding:
 6. **Environment issue.** The runner installs no dependencies. Passing locally is not evidence.
 
 </details>
-
-### The pattern in the answers
-
-Findings 3 and 4 form a loop: the agent removed a guard, then removed the test that proved the guard mattered, and the suite went green. **A passing test suite is only evidence if the tests did not change in the same commit.** That is why the diff and the test result must be read together — either alone is misleading.
-
----
 
 ## Step 2 — Rank by severity, and justify the ranking
 
@@ -248,20 +234,6 @@ You completed the lab if you can explain:
 - **Model choice is step 7 of 7.** If an answer option proposes switching models before checking instructions, tool scope, or environment, it is wrong.
 - Instructions guide behaviour; they do not enforce it. A question asking how to *prevent* an edit is asking about tool scope, hooks, or branch protection — not about a better-worded instruction.
 - Evidence must be independently checkable. "The agent reported success" is not a signal.
-
----
-
-## Common pitfalls
-
-**Reaching for a different model first.** It is step 7. Steps 1–6 are cheaper and more often correct.
-
-**Treating instructions as a security control.** They guide behaviour; they do not enforce it.
-
-**Judging agent quality by how good the output reads.** Evaluate on evidence, not prose quality.
-
-**Accepting a green suite without reading the diff.** If the tests changed in the same commit, the green is unearned.
-
-**Writing the evaluation as a file nobody opens.** Attach it to the change it describes.
 
 ---
 

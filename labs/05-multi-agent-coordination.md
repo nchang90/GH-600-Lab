@@ -17,26 +17,6 @@ Steps 1 and 4 create nothing — they are the pattern choice and the conflict po
 
 ---
 
-## From one agent to a team
-
-Lab 02 built four agents with different capabilities. This lab makes them work on the same change at the same time without colliding.
-
-The important part is not the number of agents. It is how their work stays isolated, how their output becomes auditable, and how a stalled or conflicting run gets recovered.
-
-Agent work must never depend on a shared mental model. It moves through explicit artifacts, clear ownership, and reviewable handoffs.
-
----
-
-## The orchestration principle
-
-```text
-plan -> implement -> review -> consolidate
-```
-
-Each handoff goes through a file or artifact another human or agent can inspect later. This is the direct application of Lab 03: **jobs are isolated machines.** Two jobs share nothing but what one uploads and the other downloads. There is no conversation between them, and an answer that proposes passing information "through the agent's context" is wrong for the same reason it was wrong in Lab 03.
-
----
-
 ## Step 1 — Choose the pattern
 
 Four patterns are available. Pick one for the loyalty discount PR from Lab 04, and be able to defend it:
@@ -100,20 +80,6 @@ Add three jobs that run alongside the existing `test` and `scope-check`:
           retention-days: 7
 ```
 
-### What each part is doing
-
-**`strategy.matrix`** is the isolation mechanism. Each agent gets its own runner, its own checkout, and its own filesystem. They cannot overwrite each other's work because they are not on the same machine.
-
-**`fail-fast: false`** matters more than it looks. The default is `true`, which cancels the remaining matrix jobs as soon as one fails — so a crashed security-scanner would silently discard the reviewer's completed findings. In a review pipeline you want every agent's output regardless of the others.
-
-**`needs: test`** means no agent reviews a change whose tests have not run. Reviewing a broken build wastes three runners and produces findings about code that is about to change.
-
-**`upload-artifact` is the handoff.** Not a variable, not a log line, not the agent's context — a file another job downloads. `retention-days: 7` bounds how long the audit trail lives; adjust it to your retention policy rather than leaving the 90-day default by accident.
-
-> The `Run` step above is a placeholder that writes a stub file. Replace it with your actual agent invocation. The lab's teaching content is the isolation and handoff structure around it, which is what Domain 5 tests — not the invocation syntax, which changes between runners.
-
----
-
 ## Step 3 — Add the consolidation job
 
 Append one more job:
@@ -159,18 +125,6 @@ Append one more job:
           path: consolidated-review.md
           retention-days: 30
 ```
-
-### Why `if: always()`
-
-Without it, the consolidation job is skipped whenever any agent job fails — which is precisely when you most want to see what the surviving agents found. `always()` combined with `fail-fast: false` means a partial result still reaches a human.
-
-### Why it enumerates the missing agents
-
-The final loop names any agent that produced no artifact. A consolidated report that silently omits a crashed agent looks identical to one where that agent found nothing, and those are opposite conclusions. **Absence of findings and absence of the agent must be distinguishable in the output**, or the report quietly overstates its own coverage.
-
-This is the single most testable idea in Domain 5.
-
----
 
 ## Step 4 — Handle conflicts and degraded behaviour
 
@@ -230,19 +184,18 @@ You completed the lab if you can explain:
 - Partial results are still results. Pipelines that discard them on a single failure lose the evidence a reviewer needs most.
 - Consolidation is a step someone must own. Findings scattered across seven artifacts have not been reviewed.
 
----
+### The two flags, and what each one saves
 
-## Common pitfalls
+| Flag | Default | What breaks without it |
+| --- | --- | --- |
+| `fail-fast: false` | `true` | One agent's failure cancels the rest of the matrix, discarding findings that had already completed |
+| `if: always()` | skips on failure | Consolidation is skipped exactly when an agent failed — the moment you most need the surviving output |
 
-**Treating parallel work as shared work.** Parallel agents still need isolated boundaries.
+They solve different halves of the same problem. `fail-fast: false` keeps the other agents running; `if: always()` makes sure someone reads them.
 
-**Using chat as the handoff.** Handoffs need artifacts, not context.
+### Absence of findings vs absence of the agent
 
-**Leaving `fail-fast` at its default.** One crashed agent discards the others' completed work.
-
-**A consolidated report that hides absent agents.** Silence and success look identical unless you make them different.
-
-**Skipping consolidation.** The team needs one reviewable result, not seven artifacts.
+A consolidated report that silently omits a crashed agent looks identical to one where that agent found nothing — and those are opposite conclusions. Enumerating non-reporters by name is what stops the report overstating its own coverage. This is the single most testable idea in Domain 5.
 
 ---
 

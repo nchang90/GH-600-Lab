@@ -16,77 +16,6 @@
 
 ---
 
-## Three categories of control
-
-Every safety mechanism falls into one of three categories, and knowing which is which is most of Domain 6.
-
-| Category | Acts | Examples |
-| --- | --- | --- |
-| **Preventive** | Before the action | Tool lists, hooks, branch protection, rulesets |
-| **Detective** | After the action | Session logs, CodeQL, secret scanning, audit logs |
-| **Corrective** | After the damage | Revert PR, stop session, rotate secrets |
-
-You need all three. Preventive controls fail — a regex misses a case, a rule has an exception. Detective controls tell you it happened. Corrective controls limit how long the damage persists.
-
-The mistake to avoid is investing entirely in prevention and having no idea when it fails.
-
----
-
-## The enforcement ladder
-
-```text
-Instructions      guide behaviour        not enforceable
-Tool lists        bound capability       enforced by the runtime
-Hooks             intercept actions      can deny at execution time
-Branch protection  enforce policy        cannot be bypassed
-```
-
-Each rung is stronger and more expensive than the one below. Match the rung to the consequence: a style preference belongs in instructions; "never force-push to main" belongs at the top, enforced in two places.
-
----
-
-## What a hook is
-
-A hook is a script that runs at a defined point in the agent's execution and returns a decision. The one that matters is `preToolUse`, which fires **before** a tool executes and can block it.
-
-The contract is simple: JSON on stdin describing the intended action, JSON on stdout with the decision.
-
-```text
-stdin  → {"toolName": "bash", "toolArgs": "git push origin main"}
-stdout → {"permissionDecision": "deny", "permissionDecisionReason": "..."}
-```
-
-Three decisions are possible:
-
-| Decision | Interactive session | Cloud agent |
-| --- | --- | --- |
-| `allow` | Tool executes | Tool executes |
-| `deny` | Tool blocked | Tool blocked |
-| `ask` | User is prompted | **Treated as deny** |
-
-`ask` becomes `deny` in a cloud agent. There is no user present to answer, so the safe default is refusal.
-
-### The other hook events
-
-`preToolUse` is the one you build in this exercise, because it is the only event that can **block** an action. It is not the only event available. You will not configure these, but you should recognise them and know what each is for:
-
-| Event | Fires | Typical use |
-| --- | --- | --- |
-| `sessionStart` | When a session begins | Inject environment facts the agent cannot discover |
-| `userPromptSubmitted` | After the user submits a prompt, before the agent reasons | Redact secrets or reject out-of-scope work |
-| `postToolUse` | After a tool succeeds | Run a formatter or linter after an edit, re-run affected tests |
-| `errorOccurred` | When a tool or the agent raises an error | Capture diagnostics and decide whether a retry is sane |
-| `agentStop` | When the top-level agent finishes | Post the run summary and close out the audit record |
-| `subagentStop` | When a delegated sub-agent finishes | Validate a sub-agent's output before the orchestrator consumes it |
-| `sessionEnd` | When the session terminates | Flush logs and remove temporary credentials |
-
-Two distinctions worth holding onto:
-
-- **Only `preToolUse` is preventive.** Everything else observes or reacts after the fact, which puts them in the detective and corrective categories.
-- **`agentStop` and `subagentStop` are different scopes.** If you want per-agent validation, `agentStop` is too late.
-
----
-
 ## Step 1 — Hook configuration
 
 **Create this file:** `.github/hooks/pre-tool-policy.json`
@@ -114,34 +43,6 @@ Two distinctions worth holding onto:
   }
 }
 ```
-
-### The `matcher` field
-
-`matcher` is a regex against the hook's `toolName`, deciding which actions invoke the script. `"bash|powershell"` catches shell execution on either platform. Running the policy script on every file read would be pure overhead — the matcher keeps it targeted.
-
-### Hook tool names are not agent tool names
-
-This is the single most confusing part of Domain 6, and it is heavily tested. The names used in hooks are finer-grained than the capability names in an agent's `tools:` list:
-
-| Hook `toolName` | Agent `tools` entry | Meaning |
-| --- | --- | --- |
-| `view` | `read` | Read file contents |
-| `grep` | `search` | Search file contents |
-| `glob` | `search` | Find files by pattern |
-| `edit` | `edit` | Modify files |
-| `create` | `edit` | Create new files |
-| `bash` | `execute` | Run shell commands |
-| `task` | `agent` | Run subagent tasks |
-
-Traps:
-
-- `view` means reading a file, not browsing the web.
-- `grep` and `glob` both map to `search`.
-- `create` requires `edit` in the agent's tools list.
-
-`timeoutSec` bounds how long the hook may take. A hook that hangs would otherwise stall the agent indefinitely.
-
----
 
 ## Step 2 — The policy script
 
@@ -191,30 +92,6 @@ Make it executable:
 ```bash
 chmod +x .github/hooks/scripts/pre-tool-policy.sh
 ```
-
-### What the four rules protect
-
-**Direct push to main/prod** — the agent must go through a pull request.
-
-**Force push** — rewrites history and can destroy other people's commits.
-
-**Secrets on the command line** — command lines land in logs, shell history, and process listings.
-
-**Destructive recursive delete** — self-explanatory, and irreversible.
-
-### Every denial explains itself
-
-`permissionDecisionReason` is returned to the agent, which means it can adapt. A bare denial just produces a retry loop.
-
-**A good guardrail states the allowed alternative.**
-
-### The honest limitation
-
-These are regex checks on a command string, and regexes on shell commands are defeatable. That does not make the hook useless; it makes it one layer. Branch protection is what actually guarantees the push fails, because it is enforced server-side where no clever quoting reaches it.
-
-**Hooks reduce accidents. Branch protection stops the action.**
-
----
 
 ## Step 3 — The post-edit hook
 
@@ -352,6 +229,10 @@ You completed the lab if you can explain:
 
 `preToolUse` is the only preventive hook. If a question asks how to **stop** an action, every other event is the wrong answer.
 
+### What a hook cannot stop
+
+Pattern matching on a command string is bypassable — `rm -rf` can be spelled with variables, quoting, or a different tool entirely. A `preToolUse` hook reduces accidents; it does not stop a determined path. Branch protection, rulesets, required checks, and protected environments enforce at the repository and deployment layer, where a shell string cannot reach. Hooks are one rung of the ladder, never the whole ladder.
+
 ### Hook toolName → agent capability
 
 | Hook `toolName` | Agent `tools` |
@@ -370,14 +251,6 @@ Traps:
 - `grep` and `glob` both mean `search`.
 - `create` requires `edit`.
 
-### The enforcement ladder
-
-- Instructions guide — not enforceable
-- Hooks intercept — can deny
-- Branch protection enforces — cannot be bypassed
-
-High-risk actions get multiple layers.
-
 ### Audit
 
 - `artifact.destroy` in the organization audit log — who deleted an artifact
@@ -386,22 +259,6 @@ High-risk actions get multiple layers.
 ### One more accountability gate
 
 When Copilot pushes workflow changes to a PR and the workflows do not run, the fix is to click **"Approve and run workflows."** This is deliberate: an agent editing CI could otherwise grant itself capability by modifying the very workflow that validates it.
-
----
-
-## Common pitfalls
-
-**Forgetting `chmod +x`.** The hook silently fails to run.
-
-**Assuming `ask` prompts someone in CI.** It denies.
-
-**Confusing hook tool names with agent capabilities.** Different vocabularies, same system.
-
-**Relying on the hook alone for high-risk actions.** Regex is defeatable; add branch protection.
-
-**Denying without a reason.** The agent cannot adapt and will retry.
-
-**Skipping detective controls.** Prevention fails; you need to know when.
 
 ---
 

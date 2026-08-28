@@ -14,36 +14,6 @@
 
 ---
 
-## Why this lab comes first
-
-An agent does not automatically know the purpose of this repository, which files are sensitive, or which test command is correct. If those facts are not written down, the agent must guess.
-
-Repository instructions provide durable context that every task can reuse. Because the instructions are stored in Git, they can also be reviewed, versioned, and corrected when agent behavior needs to change.
-
----
-
-## The architecture principle
-
-Agent work should remain visible in the normal software development lifecycle:
-
-```text
-task -> plan -> branch -> pull request -> checks -> review -> merge
-```
-
-Keep agent work inside this review chain. Do not treat a good prompt or a convincing plan as proof that a change is safe.
-
-### Choose the lowest useful autonomy
-
-| Level | Typical capabilities | Suitable work |
-| --- | --- | --- |
-| Low | Read and search | Explain, summarize, and review |
-| Medium | Read, search, edit, and test | Implement scoped code changes |
-| High | Coordinate agents or use external services | Controlled workflows with added approval |
-
-Grant only the capabilities required for the task.
-
----
-
 ## Step 1 — Create the repository instructions file
 
 Create [`.github/copilot-instructions.md`](../.github/copilot-instructions.md) with the following content:
@@ -54,13 +24,13 @@ Create [`.github/copilot-instructions.md`](../.github/copilot-instructions.md) w
 ## Architecture
 
 - This repository is a GH-600 study lab for governed agentic development.
-- `app/` contains the small sample application used by the labs.
+- `app/` contains the cart module (`cart.py`) and its HTTP wrapper (`api.py`). Standard library only — do not add third-party dependencies.
 - `tests/` contains the automated validation tests for the sample app and lab tasks.
 - `labs/` contains the GH-600 exercise instructions the learner follows in order.
 - `templates/` contains task templates and starter artifacts to be filled in by the learner.
 - `solutions/` contains sample answers for review after an attempt is complete.
 - `.github/` contains repository guidance, skills, and automation.
-- `infra/` and `tools/` contain the Azure deployment and support tooling.
+- `infra/` holds the Bicep that deploys `app/` to Azure Container Apps, and `Dockerfile` builds its image; `tools/` holds support tooling. Treat all of these as sensitive paths and do not change them without review.
 
 ## Conventions
 
@@ -89,18 +59,6 @@ python3 -m unittest discover -s tests
 - Stop and request human review before changing deployment settings, environment configuration, token permissions, MCP server configuration, CODEOWNERS, or branch protection.
 - Keep every change reviewable through the repository's governed development workflow.
 ````
-
-### What each section does
-
-**Architecture** tells the agent what the repository is and where different kinds of work belong.
-
-**Conventions** define working decisions that may not be obvious from reading one file.
-
-**Testing** gives the agent an exact command so it can validate its own changes.
-
-**Security** defines rules that must remain true even when a task asks for a risky change.
-
----
 
 ## Step 2 — Verify the file
 
@@ -155,20 +113,6 @@ You completed the lab if your instructions answer these questions:
 - Prefer reviewable evidence such as a diff, test result, scan result, or approval event.
 - Match agent autonomy to task risk and grant the lowest useful capability.
 - Require human review when a change affects sensitive configuration or governance.
-
----
-
-## Common pitfalls
-
-**The file exists but is empty.** Verify it with `test -s`.
-
-**The instructions are suggestions.** Use direct, imperative rules.
-
-**The test command is vague.** Record the exact command that works in this repository.
-
-**The instructions repeat obvious facts.** Focus on purpose, conventions, validation, and boundaries that the agent cannot safely infer.
-
-**The instructions become outdated.** Update them when the repository structure or validation process changes.
 
 ---
 

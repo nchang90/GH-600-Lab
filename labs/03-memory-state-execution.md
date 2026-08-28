@@ -10,14 +10,6 @@
 
 ---
 
-## Why an exercise with no files
-
-This exercise is about how to think about state, not a repo change. The exam checks whether you can tell session context, durable artifacts, repository instructions, and Copilot Memory apart.
-
-The point is not to ask for more memory. It is to change what goes into the bundle.
-
----
-
 ## The four kinds of state
 
 | Kind | Lives in | Survives |
@@ -65,12 +57,6 @@ Read the log and answer the questions below.
 
 </details>
 
-### What the sequence means
-
-Good agent work finds context, reads it, changes it, and verifies it.
-
----
-
 ## Task 2 — Match each scenario to the right storage
 
 Write the matching letter (A–E) next to each number.
@@ -95,12 +81,6 @@ Write the matching letter (A–E) next to each number.
 5. **E — Session logs / PR timeline.** The record of what actually happened.
 
 </details>
-
-### Decision vs event
-
-A review captures a decision. Logs and timelines capture events. Audits need both.
-
----
 
 ## Task 3 — Inspect your own Copilot Memory
 
@@ -202,20 +182,6 @@ Infer the level from the tools that appear:
 | `search`, `read` | Low |
 | plus `edit`, `execute` | Medium |
 | plus `agent`, MCP servers | High |
-
----
-
-## Common pitfalls
-
-**Assuming the agent remembers earlier corrections.** It remembers only what is currently in context. Repeated corrections signal a missing instruction file entry.
-
-**Passing data between workflow jobs without an artifact.** Jobs are isolated machines. Without `upload-artifact` / `download-artifact` or `$GITHUB_OUTPUT`, the data does not travel.
-
-**Treating a plan as a record.** A plan states intent. Only logs and diffs record outcome.
-
-**Relying on Copilot Memory for a team standard.** It is enabled per user, expires after 28 days of disuse, and lives outside your repository. A standard that must hold for everyone belongs in an instruction file.
-
-**Fighting context drift by explaining harder.** Restart the session and fix the durable source instead.
 
 ---
 

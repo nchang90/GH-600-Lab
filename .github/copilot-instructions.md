@@ -1,13 +1,15 @@
+# Repository Instructions
+
 ## Architecture
 
 - This repository is a GH-600 study lab for governed agentic development.
-- `app/` contains the small sample application used by the labs.
+- `app/` contains the cart module (`cart.py`) and its HTTP wrapper (`api.py`). Standard library only — do not add third-party dependencies.
 - `tests/` contains the automated validation tests for the sample app and lab tasks.
 - `labs/` contains the GH-600 exercise instructions the learner follows in order.
 - `templates/` contains task templates and starter artifacts to be filled in by the learner.
 - `solutions/` contains sample answers for review after an attempt is complete.
 - `.github/` contains repository guidance, skills, and automation.
-- `infra/` and `tools/` contain the Azure deployment and support tooling.
+- `infra/` holds the Bicep that deploys `app/` to Azure Container Apps, and `Dockerfile` builds its image; `tools/` holds support tooling. Treat all of these as sensitive paths and do not change them without review.
 
 ## Conventions
 

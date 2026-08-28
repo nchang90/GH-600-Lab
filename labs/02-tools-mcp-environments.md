@@ -22,35 +22,6 @@
 
 ---
 
-## Why this lab comes second
-
-Lab 01 produced one set of instructions for every agent. That works until you want an agent that reviews code *without* being able to change it, and another that must change code to do its job at all. Those are contradictory requirements, and no single configuration satisfies both.
-
-Custom agents resolve it. Each file describes one role: a persona, responsibilities, and — the part that matters — an explicit tool list. The tool list is not a hint. It is the boundary of what the agent can physically do.
-
----
-
-## The architecture principle
-
-Grant the smallest useful tool set, then restrict where those tools may operate.
-
-```text
-tool access -> allow-list -> execution boundaries -> evidence
-```
-
-An allow-list says what exists. Boundaries say where it is safe to act. Evidence shows what actually happened.
-
-### Separate the controls
-
-| Control | What it answers |
-| --- | --- |
-| Tool list on an agent | What can this agent physically do? |
-| MCP allow-list | Which external tools are reachable at all? |
-| Execution boundaries | Where may the agent act? |
-| Error handling | What happens when something fails? |
-
----
-
 ## Agent file
 
 Every file in `.github/agents/` has YAML frontmatter and a markdown body that becomes the agent's system prompt.
@@ -84,7 +55,7 @@ You are ... (the body becomes the agent's instructions)
 
 ## Step 1 — The reviewer agent (low autonomy)
 
-**Create this file:** `.github/agents/reviewer.agent.md`
+**Create this file:** `.github/agents/reviewer_agent.md`
 
 ````markdown
 ---
@@ -124,26 +95,6 @@ For every finding, report:
 
 If no defects are found, state that clearly and name the remaining test gaps.
 ````
-
-### Why this shape
-
-**The tool list is the actual guarantee.** The body says "do not edit files," but that is a request the model could rationalize around. The absence of `edit` from the tool list is enforced by the runtime. Write both: the instruction explains the intent, the tool list makes it true. When an exam question asks how you *guarantee* an agent cannot modify code, the answer is the tool list, not the prompt.
-
-**The checklist reflects this repository.** Items 3 and 5 are not generic review advice — they map to rules in your `.github/copilot-instructions.md`. A reviewer whose checklist mirrors your conventions produces findings you care about.
-
-**Verify:**
-
-```bash
-test -s .github/agents/reviewer.agent.md && echo "PASS: file non-empty"
-grep -q "description:" .github/agents/reviewer.agent.md && echo "PASS: has description"
-grep -qE "^  - (edit|execute)" .github/agents/reviewer.agent.md \
-  && echo "FAIL: reviewer must not have edit or execute" \
-  || echo "PASS: read-only"
-```
-
-**Behavioural test:** select `reviewer` in the agent picker and ask it to fix a bug in `app/cart.py`. It should report the bug and decline to change the file. That refusal is the feature.
-
----
 
 ## Step 2 — The test-runner agent (medium autonomy)
 
@@ -191,24 +142,6 @@ Run from the repository root. The tests import `app.cart`, which resolves only f
 - **Action taken**: what you changed, or why you changed nothing
 ````
 
-### Why this agent gets `execute`
-
-An agent is far more useful when it can close its own feedback loop: make a change, run the tests, see the failure, correct it. That only works with `execute`. Note the command names the exact invocation — a bare `python3 -m unittest` from the wrong directory fails on the import, and an agent that has been told the precise command does not waste turns discovering that.
-
-The constraint about not weakening assertions is not decoration. Left unconstrained, the shortest path from a failing test to a passing suite is deleting the assertion, and an agent optimizing for "tests pass" will find it.
-
-**Verify:**
-
-```bash
-test -s .github/agents/test-runner.agent.md && echo "PASS: file non-empty"
-grep -q "python3 -m unittest discover -s tests" .github/agents/test-runner.agent.md \
-  && echo "PASS: names the real command"
-```
-
-**Behavioural test:** break an assertion in `tests/test_cart.py`, then ask `test-runner` to investigate. It should identify the specific failing test and say whether the fault is in the test or in `app/cart.py`.
-
----
-
 ## Step 3 — The security-scanner agent
 
 **Create this file:** `.github/agents/security-scanner.agent.md`
@@ -248,21 +181,6 @@ You are the security analysis agent for this repository.
 - **Why it matters**
 - **Recommended remediation** (for a human or the test-runner to apply)
 ````
-
-### Why it can execute but not edit
-
-This is the combination people find surprising, and it is the point of the exercise. The scanner needs `execute` to run checks, but giving it `edit` would let a single agent both decide a control is wrong and remove it. Separating detection from remediation means every security fix passes through something a human can review.
-
-**Verify:**
-
-```bash
-test -s .github/agents/security-scanner.agent.md && echo "PASS: file non-empty"
-grep -qE "^  - edit" .github/agents/security-scanner.agent.md \
-  && echo "FAIL: scanner must not have edit" \
-  || echo "PASS: cannot remediate"
-```
-
----
 
 ## Step 4 — The orchestrator agent
 
@@ -304,21 +222,6 @@ You are the coordination agent for this repository.
 A single consolidated report with one section per delegated agent, then a
 **Conflicts** section, then an overall recommendation.
 ````
-
-### Why the coordinator is deliberately weak
-
-The orchestrator has `agent` but not `edit` or `execute`. Every change it causes happens through an agent whose own limits still apply, so a reasoning error at the coordination layer cannot translate directly into a bad write. This is the multi-agent pattern Lab 05 builds on.
-
-**Verify:**
-
-```bash
-for f in reviewer test-runner security-scanner orchestrator; do
-  test -s ".github/agents/$f.agent.md" \
-    && echo "PASS: $f" || echo "FAIL: $f missing or empty"
-done
-```
-
----
 
 ## Step 5 — Configure MCP servers
 
@@ -418,26 +321,6 @@ When Copilot's coding agent works on a pull request, it runs on GitHub's infrast
 
 Get either wrong and the file is silently ignored — no error, no warning, just an agent working in an unprepared environment.
 
-### Setup prepares; it does not validate
-
-The version in this repository deliberately does **not** run the test suite. That is not an oversight. Setup steps exist to make the environment usable; the agent runs tests itself once it is working. A failing test in setup means the agent's environment never becomes ready, which turns an ordinary red test into a total outage for the agent.
-
-### Why this file is nearly empty here
-
-`app/` and `tests/` import only `dataclasses` and `unittest` — both standard library. There is no `requirements.txt`, so there is nothing to install.
-
-That is the lesson: **the value of this file scales with your dependency surface.** In a repository with third-party packages, a missing install step here is the single most common reason a cloud agent behaves differently from a local one — it reports failures that come from the environment rather than from the code, and Lab 04 asks you to classify exactly that kind of failure.
-
-**Verify:**
-
-```bash
-python3 -c "import yaml; d=yaml.safe_load(open('.github/workflows/copilot-setup-steps.yml')); \
-  assert 'copilot-setup-steps' in d['jobs'], 'job name must be copilot-setup-steps'; \
-  print('PASS: job correctly named')"
-```
-
----
-
 ## Step 8 — Read the environment you are securing
 
 No file to create. [infra/resources.bicep](../infra/resources.bicep) deploys the cart API — the same code your agents review and test — to Azure Container Apps. Open it and map each control to what it enforces:
@@ -474,12 +357,6 @@ For each row, decide the retry rule, the rollback step, and the escalation trigg
 
 An agent widening a CIDR to clear its own `403` is the failure this lab exists to prevent. Note also which symptoms are indistinguishable from outside: a `403` and a service that never started both look like "it's broken" to the agent, and they need opposite responses.
 
-### Why this matters for Lab 04
-
-The deployed service runs the same `app/cart.py` that `tests/test_cart.py` covers. That is what makes a passing test suite evidence about something real rather than a claim about a local checkout — and Lab 04 asks you to fill an Evidence column with exactly that kind of link.
-
----
-
 ## Self-check
 
 You completed the lab if you can explain:
@@ -499,6 +376,8 @@ You completed the lab if you can explain:
 - Watch for answers that grant broad permissions, bypass pull requests, expose secrets, or let agents modify governance files without review.
 - **Instructions guide; tool lists enforce.** If a question asks how you *guarantee* a capability is absent, the answer is never "tell the agent not to."
 - `description` is the field a delegating agent reads. A vague description is why an orchestrator picks the wrong specialist.
+- **The orchestrator is deliberately weaker than the agents it directs.** It holds `agent` but not `edit` or `execute`, so a reasoning error at the coordination layer cannot become a bad write — every change still passes through an agent with its own limits.
+- **`execute` without `edit` separates detection from remediation.** The security-scanner can run checks but cannot remove the control it just flagged, so every security fix passes through something a human reviews.
 
 ### MCP configuration traps
 
@@ -516,20 +395,6 @@ You completed the lab if you can explain:
 | `AGENTS.md` | Agent-oriented docs, read by multiple agent tools |
 | `.github/agents/*.agent.md` | One agent profile |
 | `.mcp.json`, `.github/mcp.json`, `.vscode/mcp.json` | MCP servers, at repository or editor scope |
-
----
-
-## Common pitfalls
-
-**The tool list and the prose disagree.** If the body says "read-only" and the list includes `edit`, the list wins. Keep them consistent.
-
-**The allow-list is mistaken for enforcement.** A JSON file in `tools/` denies nothing. Name the control that does the denying.
-
-**The boundaries are suggestions.** Write rules, not advice.
-
-**The fix for a boundary is widening the boundary.** Adding your IP to the CIDR to clear a `403` is a governance change wearing the costume of a bug fix.
-
-**A token pasted into `.mcp.json`.** Reference the environment variable instead.
 
 ---
 
