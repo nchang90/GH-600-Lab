@@ -198,17 +198,46 @@ Push the branch and open a PR. **The PR body is your evaluation report** — not
 
 This is the point of the lab. Lab 03 established that durable, auditable state lives in pull requests, artifacts, and logs. An evaluation report committed as a markdown file is a document about evidence; a PR body sits attached to the diff, the test run, and the reviewer's approval, which *are* the evidence.
 
-[templates/evaluation-report.md](../templates/evaluation-report.md) is the structure. Fill in a copy and pass it straight to `gh`:
+Write the body with this structure:
+
+````markdown
+# Agent Evaluation Report
+
+## Task
+
+## Expected outcome
+
+## Actual outcome
+
+## Evaluation signals
+
+| Signal | Result | Evidence |
+| --- | --- | --- |
+| Unit tests | | |
+| Static checks | | |
+| Changed file scope | | |
+| Plan adherence | | |
+| Security scan | | |
+| Workflow logs | | |
+| Human review | | |
+
+## Failure classification
+
+| Finding | Classification | Root cause | Corrective action |
+| --- | --- | --- | --- |
+
+## Tuning actions
+
+## Final decision
+````
 
 ```bash
-cp templates/evaluation-report.md /tmp/evaluation.md
-# fill it in, then:
-gh pr create --title "Add loyalty discount support" --body-file /tmp/evaluation.md
+gh pr create --title "Add loyalty discount support" --body-file evaluation.md
 ```
 
-Every `TBD` in that template is a cell you must replace. The **Evidence** column takes something a reviewer can click or run — a workflow run URL, a command and its output, a file path. A cell reading "verified" is not evidence.
+Every **Evidence** cell takes something a reviewer can click or run — a workflow run URL, a command and its output, a file path. A cell reading "verified" is not evidence.
 
-Two of the template's signals have no automated source in this repository: `Static checks` and `Security scan`. Write `not configured` rather than inventing a result, and note what you would add. **A signal you did not collect is not a signal that passed** — and an evaluation that quietly omits its gaps is the same failure as a consolidated report that hides a crashed agent.
+Two signals have no automated source in this repository: `Static checks` and `Security scan`. Write `not configured` rather than inventing a result, and note what you would add. **A signal you did not collect is not a signal that passed** — an evaluation that quietly omits its gaps is the same failure as a consolidated report that hides a crashed agent.
 
 **Verify:**
 

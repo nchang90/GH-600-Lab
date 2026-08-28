@@ -11,7 +11,7 @@
 | 3 | `.github/agents/security-scanner.agent.md` | Analyst that can run checks but not fix |
 | 4 | `.github/agents/orchestrator.agent.md` | Delegating coordinator |
 | 5 | `.mcp.json` | External tool servers |
-| 6 | `templates/agent-task-brief.md` | Execution boundaries an agent cannot widen |
+| 6 | `agent-task-brief.md` | Execution boundaries an agent cannot widen |
 | 7 | `.github/workflows/copilot-setup-steps.yml` | Cloud-agent environment, then run the agent |
 | 8 | `.github/workflows/test-coverage-review.md` | An agentic workflow |
 
@@ -261,7 +261,7 @@ Ask an agent to merge a pull request through MCP. It should report that no such 
 
 ## Step 6 — Define execution boundaries
 
-**Update this file:** `templates/agent-task-brief.md`
+**Update this file:** `agent-task-brief.md`
 
 Its **Execution boundaries** section needs all seven scopes. Six are there. Add the seventh:
 
@@ -280,6 +280,16 @@ Write each boundary as a rule the agent can follow, not as a suggestion.
 A boundary is only real if the agent cannot widen it to make its own error go away. If a task fails with `403` because the agent is outside an allowed address range, the fix is to investigate — not to add itself to the range. An agent that edits `allowedIpAddressRange` to unblock itself has not solved a problem; it has removed a control and reported success.
 
 State that explicitly in the brief. "Do not modify a boundary in order to satisfy the current task" is the rule that separates a boundary from a suggestion.
+
+**Verify:**
+
+```bash
+grep -q "### Deployment environment" agent-task-brief.md \
+  && echo "PASS: seventh boundary added"
+
+n=$(grep -c "^### " agent-task-brief.md)
+[ "$n" -eq 7 ] && echo "PASS: 7 scopes" || echo "FAIL: $n scopes, expected 7"
+```
 
 ---
 

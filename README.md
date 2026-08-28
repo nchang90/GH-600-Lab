@@ -53,8 +53,6 @@ Lab 03 creates no files. It covers judgement the exam tests through log reading 
 | `app/` | The cart module and its HTTP wrapper — what agents read, change, test, and deploy |
 | `tests/` | The suite that provides evaluation evidence |
 | `labs/` | The seven lab guides |
-| `solutions/` | Sample answers, for after you attempt a lab |
-| `templates/` | Starter files the labs fill in |
 | `infra/` | Bicep for the cart API, deployed with `azd provision` |
 | `tools/` | MCP allow-list design reference |
 | `.github/skills/gh600-exam-coach/` | The lab-guide skill |
@@ -64,8 +62,6 @@ Lab 03 creates no files. It covers judgement the exam tests through log reading 
 Start with [Lab 00](labs/00-lab-preparation.md). Every file-producing step ends with a **Verify** block — do not move on until it passes.
 
 Verify with `test -s` rather than `test -f`. Creating a file in an editor does not write it to disk until you save, and `-f` passes on an empty file, which is the most common way to lose time in this lab.
-
-Use the sample in `solutions/` only after you have attempted the step yourself.
 
 ## Conventions used in these guides
 

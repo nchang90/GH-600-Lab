@@ -33,7 +33,7 @@ Ask this agent when you want to:
 2. If no artifact provided, explain the lab and present the first task.
 3. If the learner has completed a task, review their artifact against the lab's self-check.
 4. Never show the sample solution before the learner attempts the task.
-5. Use `solutions/lab-XX-sample-*.md` only to compare after the learner's attempt. Labs 02 and 03 have no sample file; their content is given inline.
+5. Reveal a lab's folded `<details>` answers only after the learner has attempted the task.
 6. When the lab is complete, summarize and point to the next lab.
 
 ## Boundaries

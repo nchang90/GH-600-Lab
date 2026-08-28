@@ -6,8 +6,6 @@
 - `app/` contains the cart module (`cart.py`) and its HTTP wrapper (`api.py`). Standard library only — do not add third-party dependencies.
 - `tests/` contains the automated validation tests for the sample app and lab tasks.
 - `labs/` contains the GH-600 exercise instructions the learner follows in order.
-- `templates/` contains task templates and starter artifacts to be filled in by the learner.
-- `solutions/` contains sample answers for review after an attempt is complete.
 - `.github/` contains repository guidance, skills, and automation.
 - `infra/` holds the Bicep that deploys `app/` to Azure Container Apps, and `Dockerfile` builds its image; `tools/` holds support tooling. Treat all of these as sensitive paths and do not change them without review.
 
@@ -28,7 +26,6 @@
 python3 -m unittest discover -s tests
 ```
 
-- Validate the relevant behavior before comparing your work with `solutions/`.
 
 ## Security
 

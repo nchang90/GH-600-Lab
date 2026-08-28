@@ -7,7 +7,7 @@
 | Step | File | Purpose |
 | --- | --- | --- |
 | 1 | `.github/copilot-instructions.md` | Repository-wide context every agent reads |
-| 2 | `templates/agent-task-brief.md` | Inputs, outputs, and success criteria for one task |
+| 2 | `agent-task-brief.md` | A brief with inputs, outputs, success criteria, and boundaries |
 | 3 | — | Map the agent lifecycle onto the GitHub surfaces that record it |
 
 **Prerequisite:** [Lab 00](00-lab-preparation.md) complete — the test command must pass before an instruction file can name it.
@@ -29,8 +29,6 @@
 - `app/` contains the cart module (`cart.py`) and its HTTP wrapper (`api.py`). Standard library only — do not add third-party dependencies.
 - `tests/` contains the automated validation tests for the sample app and lab tasks.
 - `labs/` contains the GH-600 exercise instructions the learner follows in order.
-- `templates/` contains task templates and starter artifacts to be filled in by the learner.
-- `solutions/` contains sample answers for review after an attempt is complete.
 - `.github/` contains repository guidance, skills, and automation.
 - `infra/` holds the Bicep that deploys `app/` to Azure Container Apps, and `Dockerfile` builds its image; `tools/` holds support tooling. Treat all of these as sensitive paths and do not change them without review.
 
@@ -51,7 +49,6 @@
 python3 -m unittest discover -s tests
 ```
 
-- Validate the relevant behavior before comparing your work with `solutions/`.
 
 ## Security
 
@@ -82,11 +79,13 @@ Use `test -s`, not `test -f`. An empty file passes `-f` and is the most common w
 
 ## Step 2 — Define inputs, outputs, and success criteria
 
-**Update this file:** `templates/agent-task-brief.md`
+**Create this file:** `agent-task-brief.md`
 
-The headings `## Inputs`, `## Expected outputs`, and `## Success criteria` are already there and empty. Fill them for one concrete task — adding a loyalty discount to the cart, the task Lab 04 uses:
+A brief is what turns "add a discount" into something an agent can be held to. Create it with the six execution-boundary scopes, then fill the top three sections for one concrete task — the loyalty discount that Lab 04 evaluates.
 
-```markdown
+````markdown
+# Agent Task Brief
+
 ## Inputs
 
 - `app/cart.py` — current calculation, including the `tax_rate < 0` guard
@@ -104,9 +103,63 @@ The headings `## Inputs`, `## Expected outputs`, and `## Success criteria` are a
 - `python3 -m unittest discover -s tests` passes, with a higher test count than before
 - `git diff --name-only main...HEAD` lists only `app/cart.py` and `tests/test_cart.py`
 - Every pre-existing guard is still present in `calculate_total`
-- The pull request states which criterion each change satisfies
+
+## Constraints
+
+## Execution boundaries
+
+### Repository scope
+
+- Work only in the repository named in this brief.
+- Do not change files outside the approved file list.
+- Treat `.github/`, `tools/`, and `infra/` as sensitive and do not edit them unless explicitly in scope.
+
+### Branch scope
+
+- Use only the branch named in this brief.
+- Do not merge, rebase, or rename branches unless the brief says to.
+- Do not create or modify release or protected branches.
+
+### Workflow scope
+
+- Use only the workflows named in this brief.
+- Do not change workflow permissions, required checks, or job conditions unless the brief allows it.
+- Do not bypass review or approval gates.
+
+### Runner environment
+
+- Use only the runner environment named in this brief.
+- Do not assume extra tools, packages, or secrets are available.
+
+### Network access
+
+- Use only the network access explicitly allowed in this brief.
+- Do not reach external services unless the brief names them.
+
+### Secrets and variables
+
+- Use only the secrets and variables named in this brief.
+- Do not read, print, copy, or invent secret values.
+
+## Approval gate
+````
+
+Every success criterion is a command or an observable fact. "Works correctly" is not one, because nothing can check it — and an agent optimising against an uncheckable target reports success it cannot support.
+
+**Verify:**
+
+```bash
+python3 - <<'EOF'
+import re, pathlib
+t = pathlib.Path("agent-task-brief.md").read_text()
+for h in ["Inputs", "Expected outputs", "Success criteria"]:
+    body = re.search(rf"## {h}\n(.*?)(?=\n## |\Z)", t, re.S)
+    print(("PASS" if body and body.group(1).strip() else "FAIL") + f": {h}")
+print("PASS: six scopes" if t.count("\n### ") == 6 else f"FAIL: {t.count(chr(10)+'### ')} scopes, expected 6")
+EOF
 ```
 
+---
 
 ## Step 3 — Trace the agent lifecycle through GitHub
 

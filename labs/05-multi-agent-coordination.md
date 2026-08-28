@@ -161,6 +161,19 @@ Multi-agent work fails in predictable ways. Decide, in advance, what happens for
 | Two agents report the same finding | ? |
 | Every agent passes but the human disagrees | ? |
 
+<details>
+<summary>Answers</summary>
+
+| Failure | Rule |
+| --- | --- |
+| Two agents give contradictory recommendations | Report both positions with the file and line each cites. The consolidator does not pick a winner; a human resolves it. |
+| An agent stalls and hits the job timeout | `fail-fast: false` keeps the others running; the consolidation job lists it under "did not report". Re-run that matrix leg only. |
+| An agent produces partial output | Treat partial as absent. Upload what exists as evidence, but never let a truncated report count as a clean pass. |
+| Two agents report the same finding | Keep both. Independent agreement from a reviewer and a security-scanner is stronger than either alone; de-duplicating hides that. |
+| Every agent passes but the human disagrees | The disagreement must produce a change — a checklist item, an instruction, or a new agent. |
+
+</details>
+
 Two are worth thinking through carefully.
 
 **Contradiction.** The orchestrator you built in Lab 02 is instructed not to summarize away a disagreement. A consolidator that picks a winner has made a judgement no human reviewed; one that reports both positions has escalated correctly. Silent resolution is the failure.
