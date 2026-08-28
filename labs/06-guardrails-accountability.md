@@ -181,7 +181,7 @@ Write your cadence into `.github/copilot-instructions.md` or your team runbook:
 
 ### Agent lifecycle
 
-An agent is deployed, monitored, updated, and eventually retired. Each stage needs an owner. Answer for the four agents you built in Lab 02:
+An agent is deployed, monitored, updated, and eventually retired. Each stage needs an owner. Answer for the four agents you built in Lab 02a:
 
 - Who owns each agent file, and how would a reviewer know?
 - What signal would tell you an agent has stopped being useful?

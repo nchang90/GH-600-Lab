@@ -4,7 +4,7 @@
 
 **You will create:** nothing. This lab is analysis and judgement — the concepts it establishes are applied directly in Labs 04 and 05.
 
-**Prerequisite:** [Lab 02](02-tools-mcp-environments.md) complete.
+**Prerequisite:** [Lab 02b](02b-tools-mcp-environments.md) complete.
 
 **Time:** ~40 minutes
 

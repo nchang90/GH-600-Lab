@@ -9,8 +9,8 @@
     },
     {
       "id": 2,
-      "prompt": "I finished my Lab 02 tool inventory. Help me check it and continue.",
-      "expected_output": "Review the artifact against Lab 02's self-check, use the sample only after the attempt, and identify the next Lab 02 task.",
+      "prompt": "I finished the four agents in Lab 02a. Help me check them and continue.",
+      "expected_output": "Run Lab 02a's Verify block against the four agent files, confirm the tool lists differ as intended, then point to Lab 02b.",
       "files": []
     }
   ]

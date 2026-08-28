@@ -11,7 +11,7 @@
 
 Steps 1 and 4 create nothing — they are the pattern choice and the conflict policy that justify the workflow.
 
-**Prerequisite:** [Lab 02](02-tools-mcp-environments.md) (the four agents) and [Lab 04](04-evaluation-error-analysis-tuning.md) (an open pull request to review).
+**Prerequisite:** [Lab 02a](02a-custom-agents.md) (the four agents) and [Lab 04](04-evaluation-error-analysis-tuning.md) (an open pull request to review).
 
 **Time:** About 40 minutes
 
@@ -176,7 +176,7 @@ Multi-agent work fails in predictable ways. Decide, in advance, what happens for
 
 Two are worth thinking through carefully.
 
-**Contradiction.** The orchestrator you built in Lab 02 is instructed not to summarize away a disagreement. A consolidator that picks a winner has made a judgement no human reviewed; one that reports both positions has escalated correctly. Silent resolution is the failure.
+**Contradiction.** The orchestrator you built in Lab 02a is instructed not to summarize away a disagreement. A consolidator that picks a winner has made a judgement no human reviewed; one that reports both positions has escalated correctly. Silent resolution is the failure.
 
 **The human disagreeing with a unanimous pass.** If your answer is "the agents were wrong," ask what changes as a result — a checklist item, an instruction, a new agent. An evaluation that produces no change to the system is an opinion, not a signal.
 

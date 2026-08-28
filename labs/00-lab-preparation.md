@@ -19,7 +19,7 @@
 | [5. Deploy the cart API](#5-deploy-the-cart-api-optional) | A running service for Labs 02 and 04 | Optional |
 | [6. Teardown](#6-teardown) | No ongoing Azure charges | If you did section 5 |
 
-Labs 01 through 06 assume sections 1 to 4 are complete. Only Lab 02 uses section 5, and it tells you what to do if you skipped it.
+Labs 01 through 06 assume sections 1 to 4 are complete. Only Lab 02b uses section 5, and it tells you what to do if you skipped it.
 
 ---
 
@@ -81,7 +81,7 @@ python3 -m unittest discover -s tests
 
 Expected: `Ran 9 tests` followed by `OK`.
 
-This exact command appears in `.github/copilot-instructions.md`, in the agent files you build in Lab 02, and in both workflows. If it fails here, it fails everywhere downstream — which is the only reason this section exists.
+This exact command appears in `.github/copilot-instructions.md`, in the agent files you build in Lab 02a, and in both workflows. If it fails here, it fails everywhere downstream — which is the only reason this section exists.
 
 ---
 
@@ -104,7 +104,7 @@ You should see `Agent evaluation` and `Copilot setup steps`. If the command repo
 
 ## 5. Deploy the cart API (optional)
 
-Lab 02 reasons about a real deployment and the network boundary around it. You can complete Lab 02 by reading [infra/resources.bicep](../infra/resources.bicep) without deploying anything — the template is the teaching material.
+Lab 02b reasons about a real deployment and the network boundary around it. You can complete it by reading [infra/resources.bicep](../infra/resources.bicep) without deploying anything — the template is the teaching material.
 
 Deploy if you want the evidence chain in Lab 04 to reach a running service.
 
@@ -164,7 +164,7 @@ Expected: `{"status": "ok"}` and `{"total": 22.0}` — the same number `tests/te
 
 The first request after an idle period takes a few seconds. That is the cold start you bought by scaling to zero.
 
-**Behavioural test:** request the same URL from a phone on mobile data. You should get a connection failure or `403`, because your phone's address is outside `ALLOWED_IP_RANGE`. That refusal is the control working, and Lab 02 asks you to reason about what it does and does not protect.
+**Behavioural test:** request the same URL from a phone on mobile data. You should get a connection failure or `403`, because your phone's address is outside `ALLOWED_IP_RANGE`. That refusal is the control working, and Lab 02b asks you to reason about what it does and does not protect.
 
 > **The API has no authentication.** The IP restriction is the only thing in front of it. Do not put credentials or private data behind this deployment, and do not widen the CIDR to make a failing request succeed.
 

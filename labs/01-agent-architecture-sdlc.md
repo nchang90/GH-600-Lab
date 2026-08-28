@@ -238,4 +238,4 @@ You completed the lab if your instructions answer these questions:
 
 You created one repository-level instruction file that gives agents shared architecture, conventions, testing, and security guidance.
 
-**Next:** [Lab 02 — Implement Tool Use and Environment Interaction](02-tools-mcp-environments.md)
+**Next:** [Lab 02a — Build Custom Agents](02a-custom-agents.md)

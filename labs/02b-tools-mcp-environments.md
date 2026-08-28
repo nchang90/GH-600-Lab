@@ -1,197 +1,23 @@
-# Lab 02 — Implement Tool Use and Environment Interaction (Domain 2)
+# Lab 02b — Tools, MCP, and Environments (Domain 2)
 
-**Goal:** build a set of specialized agents with deliberately different capabilities, connect them to external tools, and bound the environment they run in.
+**Goal:** connect the agents to external tools, bound the environment they run in, and run one on GitHub's infrastructure.
 
 **You will create:**
 
 | Step | File | Purpose |
 | --- | --- | --- |
-| 1 | `.github/agents/reviewer.agent.md` | Low-autonomy reviewer that cannot edit |
-| 2 | `.github/agents/test-runner.agent.md` | Medium-autonomy test executor |
-| 3 | `.github/agents/security-scanner.agent.md` | Analyst that can run checks but not fix |
-| 4 | `.github/agents/orchestrator.agent.md` | Delegating coordinator |
-| 5 | `.mcp.json` | External tool servers |
-| 6 | `agent-task-brief.md` | Execution boundaries an agent cannot widen |
-| 7 | `.github/workflows/copilot-setup-steps.yml` | Cloud-agent environment, then run the agent |
-| 8 | `.github/workflows/test-coverage-review.md` | An agentic workflow |
+| 1 | `.mcp.json` | External tool servers, read-only |
+| 2 | `agent-task-brief.md` | Execution boundaries an agent cannot widen |
+| 3 | `.github/workflows/copilot-setup-steps.yml` | Cloud-agent environment, then run the agent |
+| 4 | `.github/workflows/test-coverage-review.md` | An agentic workflow |
 
-**Prerequisite:** [Lab 01](01-agent-architecture-sdlc.md) complete.
+**Prerequisite:** [Lab 02a](02a-custom-agents.md) — the four agents — and [Lab 01](01-agent-architecture-sdlc.md) for the task brief.
 
-**Time:** About 50 minutes
-
-## Agent file
-
-Every file in `.github/agents/` has YAML frontmatter — `name`, `description`, `tools` — and a markdown body that becomes the agent's system prompt. Step 1 shows a complete one.
-
-**`description` is the field that matters most.** A coordinating agent reads it when deciding whether to delegate, so write it as *when you would use this*, not *what this is*.
-
-### The available tools
-
-| Tool | Grants |
-| --- | --- |
-| `read` | Reading file contents |
-| `search` | Searching across the codebase |
-| `edit` | Creating and modifying files |
-| `execute` | Running shell commands |
-| `agent` | Invoking other agents |
-| `web` | Fetching external web content |
+**Time:** About 30 minutes
 
 ---
 
-## Step 1 — The reviewer agent (low autonomy)
-
-**Create this file:** `.github/agents/reviewer.agent.md`
-
-````markdown
----
-name: reviewer
-description: "Reviews changes to the cart application for defects, security risks, missing tests, and violations of repository conventions."
-tools:
-  - read
-  - search
----
-
-You are a read-only code reviewer for this repository.
-
-## Review checklist
-
-1. Identify correctness and security defects.
-2. Check input validation and error handling in `app/`.
-3. Confirm monetary calculations round only at the boundary, not on every operation.
-4. Identify missing tests for changed behavior in `tests/`.
-5. Check whether the change touches `.github/`, `tools/`, or `infra/`.
-6. Check for committed secrets or credentials.
-
-## Constraints
-
-- Do not edit files.
-- Do not execute commands.
-- Report only actionable findings supported by code evidence.
-- List the most severe findings first.
-
-````
-
-
-**Behavioural test:** select `reviewer` in the agent picker and ask it to fix a bug in `app/cart.py`. It should report the bug and decline to change the file. That refusal is the feature.
-
----
-
-## Step 2 — The test-runner agent (medium autonomy)
-
-**Create this file:** `.github/agents/test-runner.agent.md`
-
-````markdown
----
-name: test-runner
-description: "Runs the cart application test suite, diagnoses failures, and repairs broken tests when the fault is in test code."
-tools:
-  - read
-  - search
-  - edit
-  - execute
----
-
-You are the test execution and analysis agent for this repository.
-
-## Responsibilities
-
-1. Run the test suite for the changed code.
-2. Diagnose failures using test output and source evidence.
-3. Repair broken or missing tests when the fix is clearly in test code.
-4. Report results and remaining risks.
-
-## Commands
-
-- Full suite: `python3 -m unittest discover -s tests`
-- Single module: `python3 -m unittest tests.test_cart`
-
-Run from the repository root. The tests import `app.cart`, which resolves only from the root.
-
-## Constraints
-
-- Do not weaken or delete assertions to make a test pass.
-- Do not change `app/` to satisfy a failing test without first stating the cause.
-- Report the exact command and its result.
-- Do not edit `.github/`, `tools/`, or `infra/`.
-
-````
-
-**Behavioural test:** break an assertion in `tests/test_cart.py`, then ask `test-runner` to investigate. It should identify the specific failing test and say whether the fault is in the test or in `app/cart.py`.
-
----
-
-## Step 3 — The security-scanner agent
-
-**Create this file:** `.github/agents/security-scanner.agent.md`
-
-````markdown
----
-name: security-scanner
-description: "Inspects changes for secrets, permission escalation, and weakened controls; reports findings without remediating them."
-tools:
-  - read
-  - search
-  - execute
----
-
-You are the security analysis agent for this repository.
-
-## Responsibilities
-
-1. Check for committed credentials, tokens, or connection strings.
-2. Check whether workflow permissions, required checks, or branch protections were weakened.
-3. Check whether `infra/resources.bicep` changed in a way that widens exposure — a broader
-   `allowedIpAddressRange`, `ingressAllowInsecure` set to true, or a mutable image tag
-   replacing an explicit commit reference.
-4. Report findings with severity and evidence.
-
-## Constraints
-
-- Do not fix what you find. Report it.
-- Do not edit files.
-- Quote the specific line that supports each finding.
-
-````
-
-## Step 4 — The orchestrator agent
-
-**Create this file:** `.github/agents/orchestrator.agent.md`
-
-````markdown
----
-name: orchestrator
-description: "Coordinates the reviewer, test-runner, and security-scanner agents and consolidates their output into one reviewable report."
-tools:
-  - read
-  - search
-  - agent
----
-
-You are the coordination agent for this repository.
-
-## Responsibilities
-
-1. Decide which specialized agents a task requires.
-2. Delegate to them with a clear, bounded instruction each.
-3. Consolidate their findings into one report.
-4. Flag contradictions between agents rather than silently picking a winner.
-
-## Delegation rules
-
-- Code quality and convention findings: `reviewer`
-- Test execution and diagnosis: `test-runner`
-- Secrets, permissions, and infrastructure exposure: `security-scanner`
-
-## Constraints
-
-- Do not edit files. Delegate every change to `test-runner`.
-- Do not execute commands directly.
-- Do not summarize away a disagreement between two agents; report both positions.
-
-````
-
-
-## Step 5 — Configure MCP servers
+## Step 1 — Configure MCP servers
 
 **Create this file:** `.mcp.json`
 
@@ -243,11 +69,22 @@ Compare your config against the fuller design in [tools/mcp.allow-list.example.j
 
 Fill in the last row. There is no approval concept anywhere in `.mcp.json` — it exists in your design document and in no configuration you have written. Name the control that actually implements it. Lab 06 builds it; this is the gap it fills.
 
+**Verify:** a wrong top-level key fails silently — the server simply never loads, with no error.
+
+```bash
+python3 -c "
+import json; d=json.load(open('.mcp.json'))
+assert 'mcpServers' in d, 'repository .mcp.json uses mcpServers, not servers'
+h=d['mcpServers']['github'].get('headers',{})
+assert h.get('X-MCP-Readonly')=='true', 'write tools are not withheld'
+print('PASS: valid, read-only, correctly keyed')"
+```
+
 Ask an agent to merge a pull request through MCP. It should report that no such tool is available — not that it declined. Those are different failures, and only the first is a boundary.
 
 ---
 
-## Step 6 — Define execution boundaries
+## Step 2 — Define execution boundaries
 
 **Update this file:** `agent-task-brief.md`
 
@@ -271,7 +108,7 @@ State that explicitly in the brief. "Do not modify a boundary in order to satisf
 
 ---
 
-## Step 7 — Run the cloud agent
+## Step 3 — Run the cloud agent
 
 **Review this file:** `.github/workflows/copilot-setup-steps.yml`
 
@@ -301,7 +138,7 @@ It is also why this file does not run the test suite. Setup prepares; the agent 
 gh agent-task create "Add a docstring to calculate_total in app/cart.py explaining the rounding rule" --follow
 ```
 
-To run it as one of the agents you built in Steps 1–4:
+To run it as one of the agents you built in Lab 02a:
 
 ```bash
 gh agent-task create "Review the open pull request for missing test coverage" \
@@ -315,7 +152,7 @@ gh agent-task list
 
 ---
 
-## Step 8 — Agentic workflow
+## Step 4 — Author an agentic workflow
 
 **Create this file:** `.github/workflows/test-coverage-review.md`
 
@@ -360,7 +197,7 @@ Note what the `permissions` block grants: `read`, `read`, `read`. The agent cann
 
 That is the point of `safe-outputs`. Write actions do not come from the token the agent holds — they are declared in frontmatter and performed by the compiled workflow after the agent finishes. The agent proposes; the harness writes, and only in the shapes you declared. An agent that decides to open a pull request instead cannot, because `create-pull-request` is not in that block.
 
-This is the same principle as Step 1's tool list, applied to outputs rather than inputs: **the declaration is the enforcement, not the instruction in the body.**
+This is the same principle as the tool lists in Lab 02a, applied to outputs rather than inputs: **the declaration is the enforcement, not the instruction in the body.**
 
 **Verify:**
 
@@ -382,7 +219,7 @@ gh aw add-wizard githubnext/agentics/daily-repo-status
 gh aw status
 ```
 
-Apply the same scrutiny you gave the MCP allow-list in Step 5: **read the `tools:` and `safe-outputs:` blocks before compiling.** An installed workflow runs with whatever permissions and write actions its author declared, in your repository. `gh aw validate` tells you it is well-formed — it does not tell you it is safe for you.
+Apply the same scrutiny you gave the MCP allow-list in Step 1: **read the `tools:` and `safe-outputs:` blocks before compiling.** An installed workflow runs with whatever permissions and write actions its author declared, in your repository. `gh aw validate` tells you it is well-formed — it does not tell you it is safe for you.
 
 ```bash
 gh aw validate
@@ -405,31 +242,24 @@ grep -qE "^\s+contents: write" .github/workflows/test-coverage-review.md \
 
 You completed the lab if you can explain:
 
-- Why the tool list, not the prompt, is what guarantees the reviewer cannot edit
-- Why the orchestrator is deliberately less capable than the test-runner
-- Why the security-scanner has `execute` but not `edit`
 - Which part of your MCP allow-list is actually enforced, and which part is only documented
-- How an agentic workflow can create an issue while holding only read permissions
 - Why a server-side read-only header is a stronger control than a client-side tool list
-- What happens when a `copilot-setup-steps` step fails, and why that is worse than it stopping
 - Why a boundary an agent may widen is not a boundary
+- What happens when a `copilot-setup-steps` step fails, and why that is worse than it stopping
+- How an agentic workflow can create an issue while holding only read permissions
 
 ---
 
 ## Exam notes
 
-- GH-600 questions in this domain combine tool choice with execution scope. The best answer usually separates tool selection, approval, and execution boundaries.
+- GH-600 questions in this domain combine tool choice with execution scope. The best answer separates tool selection, approval, and execution boundaries.
 - Watch for answers that grant broad permissions, bypass pull requests, expose secrets, or let agents modify governance files without review.
-- **Instructions guide; tool lists enforce.** If a question asks how you *guarantee* a capability is absent, the answer is never "tell the agent not to."
-- `description` is the field a delegating agent reads. A vague description is why an orchestrator picks the wrong specialist.
-- **The orchestrator is deliberately weaker than the agents it directs.** It holds `agent` but not `edit` or `execute`, so a reasoning error at the coordination layer cannot become a bad write — every change still passes through an agent with its own limits.
-- **`execute` without `edit` separates detection from remediation.** The security-scanner can run checks but cannot remove the control it just flagged, so every security fix passes through something a human reviews.
 
 ### MCP configuration traps
 
-- Custom agent YAML uses `mcp-servers`; repository `.mcp.json` uses `mcpServers`; **VS Code's `.vscode/mcp.json` uses plain `servers`**. Three spellings of the same idea, and the wrong one fails silently — the server simply never loads.
+- Custom agent YAML uses `mcp-servers`; repository `.mcp.json` uses `mcpServers`; **VS Code's `.vscode/mcp.json` uses plain `servers`**. The wrong one fails silently — the server simply never loads.
 - A local process has `command` and `args`. A remote HTTP or SSE server has a `url`.
-- A URL passed *inside* a local command's arguments does not make the transport remote. This is the distinction questions are built on.
+- A URL passed *inside* a local command's arguments does not make the transport remote.
 - Read access to issue context does not imply permission to merge pull requests. Allow-lists are per operation, not per server.
 
 ### Cloud-agent setup
@@ -440,9 +270,8 @@ You completed the lab if you can explain:
 | Job named `copilot-setup-steps` | Silently ignored |
 | Present on the **default branch** | Never triggers |
 | Only `steps`, `permissions`, `runs-on`, `services`, `snapshot`, `timeout-minutes` | Other keys silently ignored |
-| `timeout-minutes` ≤ 59 | Capped |
 
-**A failing setup step does not block the agent.** Copilot skips the rest of setup and works anyway, in a partially prepared environment. Expect exam answers that claim the run halts — they are wrong.
+**A failing setup step does not block the agent.** Copilot skips the rest of setup and works anyway, in a partially prepared environment. Expect exam answers claiming the run halts — they are wrong.
 
 ### Which file does what
 
@@ -458,7 +287,6 @@ You completed the lab if you can explain:
 
 - Agentic workflows compile to `.lock.yml`; Actions runs the lock file. Commit both.
 - `gh aw validate` checks frontmatter without writing; `gh aw compile` writes the lock file.
-- `gh aw add-wizard` installs workflows from other repositories — read their `tools:` and `safe-outputs:` before compiling.
 - `safe-outputs` declares permitted write actions, so the agent's own permissions can stay read-only.
 - `engine` selects the model provider — Copilot, Claude, Codex, Gemini, or Pi.
 
@@ -466,6 +294,6 @@ You completed the lab if you can explain:
 
 ## What you built
 
-Four agents with deliberately graduated capability, a read-only MCP configuration, and a seventh execution boundary, a cloud-agent environment you ran real work in, and an agentic workflow.
+A read-only MCP configuration, a seventh execution boundary, a cloud-agent environment you ran real work in, and an agentic workflow.
 
 **Next:** [Lab 03 — Manage Memory, State, and Execution](03-memory-state-execution.md)
