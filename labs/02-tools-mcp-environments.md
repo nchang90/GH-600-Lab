@@ -11,19 +11,13 @@
 | 3 | `.github/agents/security-scanner.agent.md` | Analyst that can run checks but not fix |
 | 4 | `.github/agents/orchestrator.agent.md` | Delegating coordinator |
 | 5 | `.mcp.json` | External tool servers |
-| 6 | `templates/agent-task-brief.md` | Execution boundaries, including the deployment |
+| 6 | `templates/agent-task-brief.md` | Execution boundaries an agent cannot widen |
 | 7 | `.github/workflows/copilot-setup-steps.yml` | Cloud-agent environment, then run the agent |
-| 9 | `.github/workflows/test-coverage-review.md` | An agentic workflow |
-
-Step 8 creates nothing — it reads the deployment template that the boundaries in Step 6 protect.
+| 8 | `.github/workflows/test-coverage-review.md` | An agentic workflow |
 
 **Prerequisite:** [Lab 01](01-agent-architecture-sdlc.md) complete.
 
-**Time:** About 55 minutes
-
-**Environment:** Step 8 reads the deployment in [infra/resources.bicep](../infra/resources.bicep), which ships the same cart code your agents review. You do not need it deployed — the template is the teaching material. [Lab 00, section 5](00-lab-preparation.md#5-deploy-the-cart-api-optional) has the procedure if you want a live endpoint.
-
----
+**Time:** About 50 minutes
 
 ## Agent file
 
@@ -321,6 +315,12 @@ Update [templates/agent-task-brief.md](../templates/agent-task-brief.md) so its 
 
 Write each boundary as a rule the agent can follow, not as a suggestion.
 
+### The boundary an agent will try to move
+
+A boundary is only real if the agent cannot widen it to make its own error go away. If a task fails with `403` because the agent is outside an allowed address range, the fix is to investigate — not to add itself to the range. An agent that edits `allowedIpAddressRange` to unblock itself has not solved a problem; it has removed a control and reported success.
+
+State that explicitly in the brief. "Do not modify a boundary in order to satisfy the current task" is the rule that separates a boundary from a suggestion.
+
 ---
 
 ## Step 7 — Run the cloud agent
@@ -385,31 +385,7 @@ git branch --show-current   # must be your default branch for the file to trigge
 
 ---
 
-## Step 8 — Read the environment you are securing
-
-No file to create. [infra/resources.bicep](../infra/resources.bicep) deploys the cart API — the same code your agents review and test — to Azure Container Apps. Open it and map each control to what it enforces:
-
-**The API has no authentication.** The template's own comment says the allow rule exists to "limit the unauthenticated lab API." The network restriction is not defence in depth here — it is the *only* control between the internet and the service. That changes how much weight the CIDR carries.
-
-**Scale-to-zero changes what a timeout means.** With `minReplicas: 0`, the first request after an idle period pays a cold start. An agent that treats a slow first response as a failure and retries aggressively will generate load against a service that was working correctly. "Slow" and "broken" are not the same signal.
-
-**The image reference is an execution boundary.** Deploying `:latest` would mean the running code is whatever was pushed last, which makes "the tests passed" a claim about a build you can no longer identify. Passing an explicit commit reference is what lets a test result and a deployment refer to the same thing.
-
-### Failure modes to reason through
-
-For each row, decide the retry rule, the rollback step, and the escalation trigger:
-
-| Symptom | What it usually means | May an agent resolve it alone? |
-| --- | --- | --- |
-| `403` from the API URL | Your address is outside `ALLOWED_IP_RANGE` | ? |
-| Connection refused on plain `http://` | `ingressAllowInsecure: false` working as designed | ? |
-| First request takes several seconds | Cold start from `minReplicas: 0` | ? |
-| Revision never becomes ready | Startup probe failing on `/healthz` | ? |
-| `ImagePullBackOff` | The ghcr.io package is private, or the reference is wrong | ? |
-
-An agent widening a CIDR to clear its own `403` is the failure this lab exists to prevent. Note also which symptoms are indistinguishable from outside: a `403` and a service that never started both look like "it's broken" to the agent, and they need opposite responses.
-
-## Step 9 — Author an agentic workflow
+## Step 8 — Author an agentic workflow
 
 **Create this file:** `.github/workflows/test-coverage-review.md`
 
@@ -502,8 +478,7 @@ You completed the lab if you can explain:
 - How an agentic workflow can create an issue while holding only read permissions
 - Why a server-side read-only header is a stronger control than a client-side tool list
 - What happens when a `copilot-setup-steps` step fails, and why that is worse than it stopping
-- Why an explicit image reference is an execution boundary and not just a deployment detail
-- What breaks first if the allowed CIDR is the only control protecting an unauthenticated service
+- Why a boundary an agent may widen is not a boundary
 
 ---
 
@@ -561,6 +536,6 @@ You completed the lab if you can explain:
 
 ## What you built
 
-Four agents with deliberately graduated capability, a read-only MCP configuration, and a seventh execution boundary covering the deployment — each tied to the real code in `app/` and the real template in [infra/resources.bicep](../infra/resources.bicep) rather than to a hypothetical environment.
+Four agents with deliberately graduated capability, a read-only MCP configuration, and a seventh execution boundary, a cloud-agent environment you ran real work in, and an agentic workflow.
 
 **Next:** [Lab 03 — Manage Memory, State, and Execution](03-memory-state-execution.md)
