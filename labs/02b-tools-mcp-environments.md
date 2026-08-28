@@ -84,15 +84,14 @@ Its **Execution boundaries** section needs all seven scopes. Six are there. Add 
 - Do not replace `cartApiImage` with a moving tag; the deployed build must stay identifiable.
 - Do not add environment variables or secrets to the container definition.
 - Treat `infra/` as sensitive, the same as `.github/` and `tools/`.
+- Do not modify an execution boundary to make the current task succeed.
 ```
 
 Write each boundary as a rule the agent can follow, not as a suggestion.
 
 ### The boundary an agent will try to move
 
-A boundary is only real if the agent cannot widen it to make its own error go away. If a task fails with `403` because the agent is outside an allowed address range, the fix is to investigate — not to add itself to the range. An agent that edits `allowedIpAddressRange` to unblock itself has not solved a problem; it has removed a control and reported success.
-
-State that explicitly in the brief. "Do not modify a boundary in order to satisfy the current task" is the rule that separates a boundary from a suggestion.
+Boundary rule: An agent must not weaken or modify an execution boundary to make its task succeed.
 
 ---
 
@@ -100,33 +99,32 @@ State that explicitly in the brief. "Do not modify a boundary in order to satisf
 
 **Review this file:** `.github/workflows/copilot-setup-steps.yml`
 
-Copilot's coding agent runs on GitHub's infrastructure, not yours. It reads this file to prepare its environment before starting. Three rules make it work:
+- Confirm the filename and job name are copilot-setup-steps.
+- Push it to the default branch.
+- Assign a task to the Copilot coding agent.
+- Confirm Python setup runs before the agent starts.
 
-- The **filename must be exactly** `copilot-setup-steps.yml`.
-- The **job must be named** `copilot-setup-steps`.
-- The file **must be on your default branch**. It does not trigger from a feature branch.
+### Assign work from VS Code
 
-Get any of them wrong and the file is silently ignored — no error, no warning.
+Choose either method:
 
-### Only six keys are honoured
+1. Open Copilot Chat and enter:
 
-Inside the `copilot-setup-steps` job, Copilot reads `steps`, `permissions`, `runs-on`, `services`, `snapshot`, and `timeout-minutes` (capped at 59). **Every other job setting is ignored**, and any `fetch-depth` you set on `actions/checkout` is overridden. Writing `needs:`, `if:`, or `strategy:` here does nothing — it fails silently, which is the theme of this step.
+   ```text
+   Add a docstring to calculate_total in app/cart.py explaining the rounding rule.
+   ```
 
-### A failing setup step does not stop the agent
+2. Delegate the chat to **Copilot coding agent**.
 
-This is the part worth memorising, and it is the opposite of what most people assume. If a setup step exits non-zero, **Copilot skips the remaining setup steps and starts working anyway**, in a half-prepared environment.
+You can also open a GitHub issue in VS Code and assign it to Copilot.
 
-So the danger is not that a broken setup blocks the agent. It is that the agent proceeds without the dependency you thought you installed, then fails later for a reason that has nothing to do with the failure's real cause. That is an *environment issue* wearing the costume of a reasoning error — exactly the misclassification Lab 04 asks you to avoid.
-
-It is also why this file does not run the test suite. Setup prepares; the agent validates.
-
-### Assign work to the cloud agent
+### Assign work with GitHub CLI
 
 ```bash
 gh agent-task create "Add a docstring to calculate_total in app/cart.py explaining the rounding rule" --follow
 ```
 
-To run it as one of the agents you built in Lab 02a:
+To use one of the custom agents from Lab 02a:
 
 ```bash
 gh agent-task create "Review the open pull request for missing test coverage" \
@@ -134,13 +132,11 @@ gh agent-task create "Review the open pull request for missing test coverage" \
 gh agent-task list
 ```
 
-`--follow` streams the session log. Watch for the setup steps running *before* the agent's first tool call — that ordering is the whole point of the file.
-
-**Behavioural test:** add a step that runs `exit 1` in the middle of the setup job, push it to your default branch, and assign a task. The agent still runs. Confirm in the session log that setup stopped at your failing step and the agent proceeded regardless — then remove it.
+`--follow` streams the session log.
 
 ---
 
-## Exercise 4 — Author an agentic workflow
+## Exercise 4 — Agentic workflow
 
 **Create this file:** `.github/workflows/test-coverage-review.md`
 
@@ -181,11 +177,9 @@ that would cover it. Do not modify any file.
 
 ### `safe-outputs` is the control that matters
 
-Note what the `permissions` block grants: `read`, `read`, `read`. The agent cannot write anything. Yet the workflow creates an issue.
+The agent remains read-only. `safe-outputs` lets the compiled workflow create only the declared output: an issue, not a pull request.
 
-That is the point of `safe-outputs`. Write actions do not come from the token the agent holds — they are declared in frontmatter and performed by the compiled workflow after the agent finishes. The agent proposes; the harness writes, and only in the shapes you declared. An agent that decides to open a pull request instead cannot, because `create-pull-request` is not in that block.
-
-This is the same principle as the tool lists in Lab 02a, applied to outputs rather than inputs: **the declaration is the enforcement, not the instruction in the body.**
+**The declaration enforces the boundary; the prompt does not.**
 
 ### Check your work
 
@@ -208,17 +202,6 @@ gh aw status
 ```
 
 Apply the same scrutiny you gave the MCP allow-list in Exercise 1: **read the `tools:` and `safe-outputs:` blocks before compiling.** An installed workflow runs with whatever permissions and write actions its author declared, in your repository. `gh aw validate` tells you it is well-formed — it does not tell you it is safe for you.
-
-```bash
-gh aw validate
-
-grep -q "safe-outputs" .github/workflows/test-coverage-review.md \
-  && echo "PASS: write actions are declared, not granted"
-
-grep -qE "^\s+contents: write" .github/workflows/test-coverage-review.md \
-  && echo "FAIL: the agent should not hold write permission" \
-  || echo "PASS: read-only permissions"
-```
 
 `gh aw validate` compiles the frontmatter and reports errors without writing a lock file — run it before every commit.
 
@@ -251,34 +234,6 @@ You completed the lab if you can explain:
 - A local process has `command` and `args`. A remote HTTP or SSE server has a `url`.
 - A URL passed *inside* a local command's arguments does not make the transport remote.
 - Read access to issue context does not imply permission to merge pull requests. Allow-lists are per operation, not per server.
-
-### Cloud-agent setup
-
-| Rule | Consequence if broken |
-| --- | --- |
-| Filename exactly `copilot-setup-steps.yml` | Silently ignored |
-| Job named `copilot-setup-steps` | Silently ignored |
-| Present on the **default branch** | Never triggers |
-| Only `steps`, `permissions`, `runs-on`, `services`, `snapshot`, `timeout-minutes` | Other keys silently ignored |
-
-**A failing setup step does not block the agent.** Copilot skips the rest of setup and works anyway, in a partially prepared environment. Expect exam answers claiming the run halts — they are wrong.
-
-### Which file does what
-
-| File | Defines | Scope |
-| --- | --- | --- |
-| `.github/copilot-instructions.md` | Conventions every agent reads | Entire repository |
-| `.github/instructions/*.instructions.md` | Path-specific guidance | An `applyTo` glob |
-| `AGENTS.md` | Agent-oriented docs | Read by multiple agent tools |
-| `.github/agents/*.agent.md` | Who an agent is — persona and tool list | Runs when you select it |
-| `.github/workflows/*.yml` | Conventional CI automation | Runs on its trigger |
-| `.github/workflows/*.md` | An AI task — trigger, tools, safe outputs | Runs after `gh aw compile` |
-| `.vscode/mcp.json` | MCP servers | VS Code workspace |
-
-- Agentic workflows compile to `.lock.yml`; Actions runs the lock file. Commit both.
-- `gh aw validate` checks frontmatter without writing; `gh aw compile` writes the lock file.
-- `safe-outputs` declares permitted write actions, so the agent's own permissions can stay read-only.
-- `engine` selects the model provider — Copilot, Claude, Codex, Gemini, or Pi.
 
 ---
 

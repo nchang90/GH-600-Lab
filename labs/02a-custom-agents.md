@@ -207,6 +207,25 @@ You are the coordination agent for this repository.
 
 ---
 
+## Check your work
+
+Confirm that all four agent definitions exist and declare the intended capability boundaries:
+
+```bash
+for agent in reviewer test-runner security-scanner orchestrator; do
+  test -s ".github/agents/$agent.agent.md"
+done
+
+grep -A5 '^tools:' .github/agents/reviewer.agent.md
+grep -A7 '^tools:' .github/agents/test-runner.agent.md
+grep -A6 '^tools:' .github/agents/security-scanner.agent.md
+grep -A6 '^tools:' .github/agents/orchestrator.agent.md
+```
+
+Then select `orchestrator` in Copilot Chat and ask it to review the cart application. It should delegate review, testing, and security analysis to the appropriate specialists and return one consolidated report.
+
+---
+
 ## Knowledge check
 
 You completed the lab if you can explain:

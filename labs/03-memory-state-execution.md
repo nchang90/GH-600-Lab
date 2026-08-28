@@ -2,9 +2,9 @@
 
 ## Introduction
 
-Learn where agent state belongs, how sessions resume, and how to preserve context across environments.
+Use real Copilot Chat sessions to observe what survives a resumed session, what a fresh session must reconstruct, and which facts belong in durable repository state.
 
-**Estimated time:** 25 minutes
+**Estimated time:** 30 minutes
 
 **Microsoft Learn alignment:** [Memory, State, and Evaluation](https://learn.microsoft.com/en-us/training/modules/memory-state-evaluation/)
 
@@ -13,125 +13,159 @@ Learn where agent state belongs, how sessions resume, and how to preserve contex
 After completing this lab, you'll be able to:
 
 - Distinguish session state, durable artifacts, repository instructions, and Copilot Memory.
-- Identify new and resumed sessions from logs.
-- Preserve and revalidate state across environments.
-- Correct context drift.
+- Resume a session without treating chat history as the system of record.
+- Reconstruct task state in a fresh session.
+- Revalidate facts that can drift between environments.
 
 ## Prerequisites
 
 - Complete [Lab 02b — Tools, MCP, and Environments](02b-tools-mcp-environments.md).
+- Complete `agent-task-brief.md`.
+- Open this repository in VS Code with Copilot Chat available.
 
 ## Lab scenario
 
-An agent task moves between an IDE, CLI, and cloud runner. Decide what can remain in a session and what must be stored as durable, reviewable state.
+The loyalty-discount task moves from one agent session to another. You must preserve enough state for a fresh agent to continue safely without copying the entire conversation.
 
-**Lab output:** No files are created.
+**Lab output:** `agent-state-record.md`
 
 ## State types
 
-| State | Best location | Survives |
+| State | Best location |
+| --- | --- |
+| Current reasoning and temporary names | Resumable session |
+| Task decisions and handoffs | Issue, pull request, or repository artifact |
+| Shared team rules | `.github/copilot-instructions.md` |
+| Personal or inferred facts | Copilot Memory, with citations and revalidation |
+| Branch, files, and environment | Derive again from the current environment |
+
+---
+
+## Exercise 1 — Start an agent session
+
+Create `agent-state-record.md` in the repository root:
+
+```markdown
+# Agent State Record
+
+## Initial session
+
+## Resumed session
+
+## Fresh-session handoff
+
+## State decisions
+
+| Fact | Storage location | How to revalidate |
 | --- | --- | --- |
-| Current conversation | Session log | The same resumed session |
-| Decisions and handoffs | PR, issue, job output, or artifact | Sessions and machines |
-| Team rules | Repository instructions | Every agent session |
-| Personal or inferred facts | Copilot Memory | Sessions until revalidation or expiry |
-
-## Exercise 1 — Read a session log
-
-```text
-2026-08-25T08:31:03Z session.id=run-42 cwd=/workspace/GH-600Lab
-2026-08-25T08:31:15Z tool=search args="copilot-instructions"
-2026-08-25T08:31:20Z tool=read args=".github/copilot-instructions.md"
-2026-08-25T08:31:25Z tool=edit args="labs/03-memory-state-execution.md"
-2026-08-25T08:31:30Z tool=execute args="python3 -m unittest discover -s tests"
 ```
 
-Answer:
+Select **+** at the top of Copilot Chat to create a separate chat, then enter:
 
-1. Is this a new or resumed session?
-2. What autonomy level does it show?
-3. What tool sequence did it use?
+```text
+Read agent-task-brief.md and .github/copilot-instructions.md. Do not edit files.
+Report the task objective, approved file scope, test command, current branch,
+and changed files. Cite a file or command as the source of every fact.
+```
 
-<details>
-<summary>Answers</summary>
+Copy the response into **Initial session**. Remove any conversational filler, but keep the cited evidence.
 
-1. **New.** There is no `resume=true` or line loading `events.jsonl`.
-2. **Medium.** It used search, read, edit, and execute.
-3. **search → read → edit → execute.**
+---
 
-</details>
+## Exercise 2 — Resume the agent session
 
-## Exercise 2 — Choose the correct storage
+In the same chat, enter the following prompt:
 
-Match each scenario to a location:
+```text
+call the loyalty-discount task "Project Lantern".
+Do not write that name to a file.
+```
 
-| Scenario | Location |
-| --- | --- |
-| Continue the same session later | ? |
-| Share a plan between workflow jobs | ? |
-| Preserve a review decision | ? |
-| Store a team-wide convention | ? |
-| Audit what an agent did | ? |
+Open another chat, then return to this conversation from the chat history. Ask:
 
-<details>
-<summary>Answers</summary>
+```text
+What temporary name did I give this task, and where is that fact stored?
+```
 
-| Scenario | Location |
-| --- | --- |
-| Continue the same session later | Session ID with `--resume` or `--continue` |
-| Share a plan between workflow jobs | Job output or workflow artifact |
-| Preserve a review decision | PR comment or review |
-| Store a team-wide convention | Repository instructions |
-| Audit what an agent did | Session logs and PR timeline |
+Record the answer under **Resumed session**. The resumed conversation can use its history, but the temporary name is not durable repository state.
 
-</details>
+---
 
-## Exercise 3 — Inspect Copilot Memory
+## Exercise 3 — Start a fresh agent handoff
 
-1. Open [Copilot Memory settings](https://github.com/settings/copilot/memory).
-2. Check whether Memory is enabled.
-3. Review its citations and remove any stale entry.
+Select **+** again to create another separate chat. First ask:
 
-Choose the correct location:
+```text
+What temporary name did I give the loyalty-discount task?
+```
 
-- Personal preference such as spelling style → **Copilot Memory**
-- Team rule such as “every endpoint needs a test” → **repository instructions**
+A fresh session should not rely on that unstored fact. If Copilot supplies an answer, ask for its source and treat it as untrusted until verified.
 
-Copilot Memory can expire or be disabled. Do not use it as the only home for a team rule.
+Run the Exercise 1 prompt in the fresh chat. Under Fresh-session handoff, record which facts came from repository files or Git and which facts could not be verified.
 
-## Exercise 4 — Move state between environments
+---
 
-Decide where these facts should come from:
+## Exercise 4 — Place and revalidate state
 
-| Fact | Source |
-| --- | --- |
-| Approved discount behavior | Issue or PR description |
-| Current branch | Git checkout |
-| Test command | Repository instructions |
-| Changed files | `git diff` |
-| `GITHUB_TOKEN` | The current environment's trust relationship |
+Complete the **State decisions** table for these facts:
 
-Before resuming elsewhere, revalidate:
+```
+| Fact | Storage location | How to revalidate |
+| --- | --- | --- |
+| Approved discount behavior | `agent-task-brief.md` or approved issue/PR | Reread the approved requirement |
+| Allowed files | `agent-task-brief.md` | Reread the scope and run `git diff --name-only` |
+| Test command | `.github/copilot-instructions.md` | Reread the instructions and run the command |
+| Current branch | Git/current environment | Run `git branch --show-current` |
+| Changed files | Git/current environment | Run `git status --short` |
+| Project Lantern | Original session context only | Resume the original conversation |
+| Credentials or tokens | Secure environment or secret store | Confirm availability without displaying the value |
+---
+```
+## Exercise 5 — Inspect Copilot Memory
 
-- Objective and approved scope
-- Current branch and changed files
-- Recorded decisions
-- Completed validation
-- Open risks
+Open [Copilot Memory settings](https://github.com/settings/copilot/memory).
 
-### Context drift
+If Memory is available, inspect one entry and record its citation, whether it is still valid, and whether you kept or deleted it. If it is unavailable, record `Memory not available for this account`.
 
-Context drift occurs when an agent continues using stale assumptions. Start a fresh session, reread current repository state, and store repeated corrections in repository instructions.
+Copilot Memory can expire or contain stale inferences. It is not the only home for a team rule or approval decision.
 
-## Check your understanding
+---
 
-- A resumed session shows `resume=true` and loads `events.jsonl`.
-- Durable state belongs in PRs, issues, logs, outputs, or artifacts—not chat history.
-- Derive facts such as branch and changed files instead of carrying them in conversation.
-- Use repository instructions for rules that must be shared and reviewable.
+## Check your work
+
+```bash
+if test -s agent-state-record.md; then
+  echo "PASS: agent-state-record.md exists and is not empty"
+else
+  echo "FAIL: agent-state-record.md is missing or empty"
+  exit 1
+fi
+
+for heading in \
+  "Initial session" \
+  "Resumed session" \
+  "Fresh-session handoff" \
+  "State decisions"; do
+  if grep -q "^## $heading$" agent-state-record.md; then
+    echo "PASS: $heading"
+  else
+    echo "FAIL: missing $heading"
+    exit 1
+  fi
+done
+```
+
+Review the record and confirm that every durable fact has a source and every environment-dependent fact has a revalidation method.
+
+## Exam preparation
+
+- Resuming a session restores conversational context; it does not make that context durable evidence.
+- Fresh sessions reconstruct state from repository files, GitHub artifacts, and the current environment.
+- Repository instructions are shared and versioned. Copilot Memory is inferred and must be revalidated.
+- Context drift occurs when an agent continues from stale branch, file, environment, or task assumptions.
 
 ## Summary
 
-You identified where state belongs, read a session log, selected durable storage, and prepared to resume work safely across environments.
+You compared resumed and fresh sessions, created a durable state record, and defined how another agent can revalidate the task before continuing.
 
 **Next:** [Lab 04 — Perform Evaluation, Error Analysis, and Tuning](04-evaluation-error-analysis-tuning.md)

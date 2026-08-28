@@ -2,17 +2,6 @@ name: Copilot setup steps
 
 # The Copilot coding agent reads this file to prepare its environment before it
 # starts work. The job MUST be named `copilot-setup-steps` for it to be picked up.
-#
-# Must live on the default branch, and only these job keys are honoured:
-# steps, permissions, runs-on, services, snapshot, timeout-minutes (max 59).
-# Anything else is silently ignored.
-#
-# Setup prepares the environment; it does not validate the code. Note that a
-# failing step here does NOT stop the agent — Copilot skips the remaining setup
-# and starts anyway, in a half-prepared environment. That is why the test suite
-# is not run here: a red test would leave the agent running without whatever the
-# later steps would have installed, producing failures that look like reasoning
-# errors rather than environment ones.
 
 on:
   workflow_dispatch:

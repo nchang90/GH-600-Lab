@@ -7,6 +7,13 @@
         "X-MCP-Toolsets": "repos,issues,pull_requests,actions",
         "X-MCP-Readonly": "true"
       }
+    },
+    "github-agentic-workflows": {
+      "command": "gh",
+      "args": [
+        "aw",
+        "mcp-server"
+      ]
     }
   }
 }

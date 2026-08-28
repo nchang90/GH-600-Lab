@@ -25,12 +25,12 @@ Work through them in order — each builds on the last.
 | [01 — Prepare Agent Architecture](labs/01-agent-architecture-sdlc.md) | 1 | ~25 min | `.github/copilot-instructions.md`, task brief, lifecycle trace |
 | [02a — Build Custom Agents](labs/02a-custom-agents.md) | 2 | ~25 min | Four agents with graduated tool lists |
 | [02b — Tools, MCP & Environments](labs/02b-tools-mcp-environments.md) | 2 | ~30 min | `.vscode/mcp.json`, boundaries, cloud agent, agentic workflow |
-| [03 — Memory, State & Execution](labs/03-memory-state-execution.md) | 3 | ~40 min | *(analysis)* Session logs, durable state |
+| [03 — Memory, State & Execution](labs/03-memory-state-execution.md) | 3 | ~30 min | A resumed-session test and `agent-state-record.md` |
 | [04 — Evaluation, Error Analysis & Tuning](labs/04-evaluation-error-analysis-tuning.md) | 4 | ~30 min | A real change, tuned instructions, a PR that is the evaluation |
 | [05 — Multi-Agent Coordination](labs/05-multi-agent-coordination.md) | 5 | ~40 min | Parallel agent review and consolidation in CI |
 | [06 — Guardrails & Accountability](labs/06-guardrails-accountability.md) | 6 | ~45 min | Preventive hooks and an audit trail |
 
-Lab 03 creates no files. It covers judgement the exam tests through log reading and scenario matching, and the concepts it establishes are applied directly in Labs 04 and 05.
+Lab 03 compares resumed and fresh Copilot Chat sessions, then records the durable state a new agent needs to continue safely.
 
 ## Microsoft Learn curriculum alignment
 
