@@ -126,6 +126,27 @@ Append one more job:
           retention-days: 30
 ```
 
+**Verify:**
+
+```bash
+python3 - <<'EOF'
+import yaml
+d = yaml.safe_load(open(".github/workflows/agent-evaluation.yml"))
+jobs = d["jobs"]
+assert "agent-review" in jobs, "missing agent-review job"
+assert "consolidate" in jobs, "missing consolidate job"
+assert jobs["agent-review"]["strategy"]["fail-fast"] is False, "fail-fast must be false"
+assert jobs["consolidate"]["needs"] == "agent-review", "consolidate must depend on agent-review"
+assert "always()" in str(jobs["consolidate"].get("if", "")), "consolidate needs if: always()"
+assert "concurrency" in d, "missing concurrency block"
+print("PASS: matrix isolated, failures preserved, consolidation always runs")
+EOF
+```
+
+Each assertion maps to one thing that breaks without it: cancelled siblings, a skipped consolidation, or two reviews racing on one branch.
+
+---
+
 ## Step 4 — Handle conflicts and degraded behaviour
 
 Multi-agent work fails in predictable ways. Decide, in advance, what happens for each:
