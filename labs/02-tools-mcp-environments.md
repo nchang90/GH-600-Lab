@@ -21,19 +21,7 @@
 
 ## Agent file
 
-Every file in `.github/agents/` has YAML frontmatter and a markdown body that becomes the agent's system prompt.
-
-````markdown
----
-name: example
-description: "One sentence describing when to use this agent."
-tools:
-  - read
-  - search
----
-
-You are ... (the body becomes the agent's instructions)
-````
+Every file in `.github/agents/` has YAML frontmatter — `name`, `description`, `tools` — and a markdown body that becomes the agent's system prompt. Step 1 shows a complete one.
 
 **`description` is the field that matters most.** A coordinating agent reads it when deciding whether to delegate, so write it as *when you would use this*, not *what this is*.
 
@@ -281,16 +269,6 @@ A boundary is only real if the agent cannot widen it to make its own error go aw
 
 State that explicitly in the brief. "Do not modify a boundary in order to satisfy the current task" is the rule that separates a boundary from a suggestion.
 
-**Verify:**
-
-```bash
-grep -q "### Deployment environment" agent-task-brief.md \
-  && echo "PASS: seventh boundary added"
-
-n=$(grep -c "^### " agent-task-brief.md)
-[ "$n" -eq 7 ] && echo "PASS: 7 scopes" || echo "FAIL: $n scopes, expected 7"
-```
-
 ---
 
 ## Step 7 — Run the cloud agent
@@ -333,29 +311,11 @@ gh agent-task list
 
 `--follow` streams the session log. Watch for the setup steps running *before* the agent's first tool call — that ordering is the whole point of the file.
 
-**Verify:**
-
-```bash
-python3 - <<'EOF'
-import yaml
-d = yaml.safe_load(open(".github/workflows/copilot-setup-steps.yml"))
-job = d["jobs"].get("copilot-setup-steps")
-assert job, "job must be named copilot-setup-steps"
-allowed = {"steps", "permissions", "runs-on", "services", "snapshot", "timeout-minutes"}
-ignored = set(job) - allowed
-assert not ignored, f"these keys are silently ignored: {sorted(ignored)}"
-assert job.get("timeout-minutes", 0) <= 59, "timeout-minutes is capped at 59"
-print("PASS: job named correctly, no ignored keys")
-EOF
-
-git branch --show-current   # must be your default branch for the file to trigger
-```
-
 **Behavioural test:** add a step that runs `exit 1` in the middle of the setup job, push it to your default branch, and assign a task. The agent still runs. Confirm in the session log that setup stopped at your failing step and the agent proceeded regardless — then remove it.
 
 ---
 
-## Step 8 — Author an agentic workflow
+## Step 8 — Agentic workflow
 
 **Create this file:** `.github/workflows/test-coverage-review.md`
 
@@ -389,23 +349,9 @@ safe-outputs:
 
 # Weekly test coverage review
 
-Review the cart application for behaviour that is implemented but not tested.
-
-1. Read `app/cart.py` and `app/api.py`.
-2. Read `tests/test_cart.py` and `tests/test_api.py`.
-3. Identify each input validation or calculation branch in `app/` that no test exercises.
-4. Check open issues first; do not raise one that already exists.
-
-Open a single issue listing each gap as:
-
-- **Function** — the function and the specific branch
-- **Why it matters** — what breaks if that branch regresses
-- **Suggested test** — the assertion that would cover it
-
-Report only gaps you can point to a specific line for. If coverage is complete,
-say so and list nothing.
-
-Do not modify any file. This workflow proposes work; it does not perform it.
+Review `app/` for behaviour no test exercises, check open issues first, and open
+one issue listing each gap with the function, why it matters, and the assertion
+that would cover it. Do not modify any file.
 ````
 
 ### `safe-outputs` is the control that matters
@@ -498,29 +444,23 @@ You completed the lab if you can explain:
 
 **A failing setup step does not block the agent.** Copilot skips the rest of setup and works anyway, in a partially prepared environment. Expect exam answers that claim the run halts — they are wrong.
 
-### The three agent file types
+### Which file does what
 
-| File | Defines | Runs |
+| File | Defines | Scope |
 | --- | --- | --- |
-| `.github/agents/*.agent.md` | Who an agent is — persona and tool list | When you select it |
-| `.github/workflows/*.yml` | Conventional CI automation | On its trigger |
-| `.github/workflows/*.md` | An AI task — trigger, tools, and safe outputs | On its trigger, after `gh aw compile` |
+| `.github/copilot-instructions.md` | Conventions every agent reads | Entire repository |
+| `.github/instructions/*.instructions.md` | Path-specific guidance | An `applyTo` glob |
+| `AGENTS.md` | Agent-oriented docs | Read by multiple agent tools |
+| `.github/agents/*.agent.md` | Who an agent is — persona and tool list | Runs when you select it |
+| `.github/workflows/*.yml` | Conventional CI automation | Runs on its trigger |
+| `.github/workflows/*.md` | An AI task — trigger, tools, safe outputs | Runs after `gh aw compile` |
+| `.mcp.json` / `.vscode/mcp.json` | MCP servers | Repository or editor |
 
-- Agentic workflows compile to `.lock.yml`; the compiled file is what Actions runs. Commit both.
+- Agentic workflows compile to `.lock.yml`; Actions runs the lock file. Commit both.
 - `gh aw validate` checks frontmatter without writing; `gh aw compile` writes the lock file.
-- `gh aw add` and `gh aw add-wizard` install workflows from other repositories — read their `tools:` and `safe-outputs:` before compiling.
-- `safe-outputs` declares which write actions are permitted. The agent's own permissions can stay read-only.
+- `gh aw add-wizard` installs workflows from other repositories — read their `tools:` and `safe-outputs:` before compiling.
+- `safe-outputs` declares permitted write actions, so the agent's own permissions can stay read-only.
 - `engine` selects the model provider — Copilot, Claude, Codex, Gemini, or Pi.
-
-### Where each artifact lives
-
-| Artifact | Scope |
-| --- | --- |
-| `.github/copilot-instructions.md` | Entire repository |
-| `.github/instructions/*.instructions.md` | Specific paths, via an `applyTo` glob |
-| `AGENTS.md` | Agent-oriented docs, read by multiple agent tools |
-| `.github/agents/*.agent.md` | One agent profile |
-| `.mcp.json`, `.github/mcp.json`, `.vscode/mcp.json` | MCP servers, at repository or editor scope |
 
 ---
 
