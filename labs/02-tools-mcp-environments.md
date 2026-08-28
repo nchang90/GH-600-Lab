@@ -12,7 +12,7 @@
 | 4 | `.github/agents/orchestrator.agent.md` | Delegating coordinator |
 | 5 | `.mcp.json` | External tool servers |
 | 6 | `templates/agent-task-brief.md` | Execution boundaries, including the deployment |
-| 7 | `.github/workflows/copilot-setup-steps.yml` | Cloud-agent environment |
+| 7 | `.github/workflows/copilot-setup-steps.yml` | Cloud-agent environment, then run the agent |
 | 9 | `.github/workflows/test-coverage-review.md` | An agentic workflow |
 
 Step 8 creates nothing — it reads the deployment template that the boundaries in Step 6 protect.
@@ -303,24 +303,7 @@ Compare your config against the fuller design in [tools/mcp.allow-list.example.j
 
 Fill in the last row. There is no approval concept anywhere in `.mcp.json` — it exists in your design document and in no configuration you have written. Name the control that actually implements it. Lab 06 builds it; this is the gap it fills.
 
-**Verify:**
-
-```bash
-test -s .mcp.json && python3 -m json.tool .mcp.json > /dev/null \
-  && echo "PASS: .mcp.json is valid JSON"
-
-grep -qi "ghp_\|github_pat_\|ghs_" .mcp.json \
-  && echo "FAIL: a literal token is in the file" \
-  || echo "PASS: no literal token"
-
-python3 -c "
-import json; d=json.load(open('.mcp.json'))['mcpServers']['github']
-h=d.get('headers',{})
-print('PASS: read-only enforced server side' if h.get('X-MCP-Readonly')=='true' or '/readonly' in d.get('url','')
-      else 'CHECK: nothing prevents write tools from loading')"
-```
-
-**Behavioural test:** ask an agent to merge a pull request through MCP. It should report that no such tool is available — not that it declined. Those are different failures, and only the first is a boundary.
+Ask an agent to merge a pull request through MCP. It should report that no such tool is available — not that it declined. Those are different failures, and only the first is a boundary.
 
 ---
 
@@ -329,8 +312,6 @@ print('PASS: read-only enforced server side' if h.get('X-MCP-Readonly')=='true' 
 Update [templates/agent-task-brief.md](../templates/agent-task-brief.md) so its **Execution boundaries** section covers all seven scopes. Six are already there. Add the seventh:
 
 ```markdown
-### Deployment environment
-
 - Reach the cart API and MCP tools only through the endpoints named in this brief.
 - Do not change `allowedIpAddressRange`, ingress settings, or probe configuration in `infra/resources.bicep` as part of a task.
 - Do not replace `cartApiImage` with a moving tag; the deployed build must stay identifiable.
@@ -340,54 +321,73 @@ Update [templates/agent-task-brief.md](../templates/agent-task-brief.md) so its 
 
 Write each boundary as a rule the agent can follow, not as a suggestion.
 
-**Verify:**
-
-```bash
-grep -q "### Deployment environment" templates/agent-task-brief.md \
-  && echo "PASS: deployment boundary present"
-grep -c "^### " templates/agent-task-brief.md
-```
-
-Expected: `7` scope headings under Execution boundaries.
-
 ---
 
-## Step 7 — Prepare the cloud-agent environment
+## Step 7 — Run the cloud agent
 
 **Review this file:** `.github/workflows/copilot-setup-steps.yml`
 
-When Copilot's coding agent works on a pull request, it runs on GitHub's infrastructure, not yours. It reads this file to prepare its environment before starting. Two rules make it work:
+Copilot's coding agent runs on GitHub's infrastructure, not yours. It reads this file to prepare its environment before starting. Three rules make it work:
 
 - The **filename must be exactly** `copilot-setup-steps.yml`.
 - The **job must be named** `copilot-setup-steps`.
+- The file **must be on your default branch**. It does not trigger from a feature branch.
 
-Get either wrong and the file is silently ignored — no error, no warning, just an agent working in an unprepared environment.
+Get any of them wrong and the file is silently ignored — no error, no warning.
 
-Setup prepares the environment; it does not validate the code. The version here deliberately does not run the test suite — a failing test in setup would mean the agent's environment never becomes ready, turning an ordinary red test into a total outage for the agent.
+### Only six keys are honoured
+
+Inside the `copilot-setup-steps` job, Copilot reads `steps`, `permissions`, `runs-on`, `services`, `snapshot`, and `timeout-minutes` (capped at 59). **Every other job setting is ignored**, and any `fetch-depth` you set on `actions/checkout` is overridden. Writing `needs:`, `if:`, or `strategy:` here does nothing — it fails silently, which is the theme of this step.
+
+### A failing setup step does not stop the agent
+
+This is the part worth memorising, and it is the opposite of what most people assume. If a setup step exits non-zero, **Copilot skips the remaining setup steps and starts working anyway**, in a half-prepared environment.
+
+So the danger is not that a broken setup blocks the agent. It is that the agent proceeds without the dependency you thought you installed, then fails later for a reason that has nothing to do with the failure's real cause. That is an *environment issue* wearing the costume of a reasoning error — exactly the misclassification Lab 04 asks you to avoid.
+
+It is also why this file does not run the test suite. Setup prepares; the agent validates.
+
+### Assign work to the cloud agent
+
+```bash
+gh agent-task create "Add a docstring to calculate_total in app/cart.py explaining the rounding rule" --follow
+```
+
+To run it as one of the agents you built in Steps 1–4:
+
+```bash
+gh agent-task create "Review the open pull request for missing test coverage" \
+  --custom-agent reviewer --follow
+gh agent-task list
+```
+
+`--follow` streams the session log. Watch for the setup steps running *before* the agent's first tool call — that ordering is the whole point of the file.
 
 **Verify:**
 
 ```bash
-python3 -c "import yaml; d=yaml.safe_load(open('.github/workflows/copilot-setup-steps.yml')); \
-  assert 'copilot-setup-steps' in d['jobs'], 'job must be named copilot-setup-steps'; \
-  print('PASS: job correctly named')"
+python3 - <<'EOF'
+import yaml
+d = yaml.safe_load(open(".github/workflows/copilot-setup-steps.yml"))
+job = d["jobs"].get("copilot-setup-steps")
+assert job, "job must be named copilot-setup-steps"
+allowed = {"steps", "permissions", "runs-on", "services", "snapshot", "timeout-minutes"}
+ignored = set(job) - allowed
+assert not ignored, f"these keys are silently ignored: {sorted(ignored)}"
+assert job.get("timeout-minutes", 0) <= 59, "timeout-minutes is capped at 59"
+print("PASS: job named correctly, no ignored keys")
+EOF
+
+git branch --show-current   # must be your default branch for the file to trigger
 ```
+
+**Behavioural test:** add a step that runs `exit 1` in the middle of the setup job, push it to your default branch, and assign a task. The agent still runs. Confirm in the session log that setup stopped at your failing step and the agent proceeded regardless — then remove it.
+
+---
 
 ## Step 8 — Read the environment you are securing
 
 No file to create. [infra/resources.bicep](../infra/resources.bicep) deploys the cart API — the same code your agents review and test — to Azure Container Apps. Open it and map each control to what it enforces:
-
-| Line in the template | What it controls |
-| --- | --- |
-| `ingressTargetPort: 8000` | The only port reachable from outside |
-| `ingressAllowInsecure: false` | HTTPS only; plain HTTP is refused |
-| `ipSecurityRestrictions` with one `Allow` rule | Every source address except the reviewed CIDR is denied |
-| `cartApiImage` supplied per environment | The running build is a specific commit, not a moving tag |
-| `minReplicas: 0` | No replica runs, and nothing is billed, until a request arrives |
-| `env` containing only `PORT` | No credentials are mounted |
-| `USER appuser` in the Dockerfile | Execution inside the container cannot modify the image |
-
-Three of these are worth pausing on.
 
 **The API has no authentication.** The template's own comment says the allow rule exists to "limit the unauthenticated lab API." The network restriction is not defence in depth here — it is the *only* control between the internet and the service. That changes how much weight the CIDR carries.
 
@@ -501,6 +501,7 @@ You completed the lab if you can explain:
 - Which part of your MCP allow-list is actually enforced, and which part is only documented
 - How an agentic workflow can create an issue while holding only read permissions
 - Why a server-side read-only header is a stronger control than a client-side tool list
+- What happens when a `copilot-setup-steps` step fails, and why that is worse than it stopping
 - Why an explicit image reference is an execution boundary and not just a deployment detail
 - What breaks first if the allowed CIDR is the only control protecting an unauthenticated service
 
@@ -521,6 +522,18 @@ You completed the lab if you can explain:
 - A local process has `command` and `args`. A remote HTTP or SSE server has a `url`.
 - A URL passed *inside* a local command's arguments does not make the transport remote. This is the distinction questions are built on.
 - Read access to issue context does not imply permission to merge pull requests. Allow-lists are per operation, not per server.
+
+### Cloud-agent setup
+
+| Rule | Consequence if broken |
+| --- | --- |
+| Filename exactly `copilot-setup-steps.yml` | Silently ignored |
+| Job named `copilot-setup-steps` | Silently ignored |
+| Present on the **default branch** | Never triggers |
+| Only `steps`, `permissions`, `runs-on`, `services`, `snapshot`, `timeout-minutes` | Other keys silently ignored |
+| `timeout-minutes` ≤ 59 | Capped |
+
+**A failing setup step does not block the agent.** Copilot skips the rest of setup and works anyway, in a partially prepared environment. Expect exam answers that claim the run halts — they are wrong.
 
 ### The three agent file types
 

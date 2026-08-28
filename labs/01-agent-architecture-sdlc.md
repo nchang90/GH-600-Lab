@@ -64,25 +64,6 @@ python3 -m unittest discover -s tests
 
 ## Step 2 — Verify the file
 
-**Verify:**
-
-```bash
-test -s .github/copilot-instructions.md \
-  && echo "PASS: instructions file exists and is not empty"
-
-grep -q "## Architecture" .github/copilot-instructions.md \
-  && grep -q "## Conventions" .github/copilot-instructions.md \
-  && grep -q "## Testing" .github/copilot-instructions.md \
-  && grep -q "## Security" .github/copilot-instructions.md \
-  && echo "PASS: required sections are present"
-
-python3 -m unittest discover -s tests
-```
-
-Use `test -s` rather than `test -f`. The `-s` check fails when the file is empty.
-
-### Behavioral check
-
 Open Copilot Chat in this repository and ask:
 
 > What test command should I run in this repository, and which paths require extra caution?
@@ -121,22 +102,6 @@ Open [templates/agent-task-brief.md](../templates/agent-task-brief.md). The head
 - The pull request states which criterion each change satisfies
 ```
 
-Each success criterion is a command or an observable fact. "Works correctly" is not a success criterion, because nothing can check it — and an agent optimising against an uncheckable target will report success it cannot support.
-
-**Verify:**
-
-```bash
-python3 - <<'EOF'
-import re, pathlib
-t = pathlib.Path("templates/agent-task-brief.md").read_text()
-for h in ["Inputs", "Expected outputs", "Success criteria"]:
-    body = re.search(rf"## {h}\n(.*?)(?=\n## |\Z)", t, re.S)
-    filled = bool(body and body.group(1).strip())
-    print(("PASS" if filled else "FAIL") + f": {h}")
-EOF
-```
-
----
 
 ## Step 4 — Trace the agent lifecycle through GitHub
 

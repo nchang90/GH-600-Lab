@@ -20,6 +20,13 @@
 
 ## Execution boundaries
 
+- Reach the cart API and MCP tools only through the endpoints named in this brief.
+- Do not change `allowedIpAddressRange`, ingress settings, or probe configuration in `infra/resources.bicep` as part of a task.
+- Do not replace `cartApiImage` with a moving tag; the deployed build must stay identifiable.
+- Do not add environment variables or secrets to the container definition.
+- Treat `infra/` as sensitive, the same as `.github/` and `tools/`.
+
+
 ### Repository scope
 
 - Work only in the repository named in this brief.
