@@ -118,10 +118,13 @@ gh run watch
 
 The run prints the image reference. Make the package public once, under your repository's **Packages** settings, or the pull from Azure will fail with an authentication error rather than a not-found.
 
+> **Registry names are lowercase.** A GitHub repository may contain capitals; a container registry path may not. Both the workflow and the command below lowercase it — if you build the reference by hand, do the same or the push fails with `repository name must be lowercase`.
+
 ### Validate before deploying
 
 ```bash
-IMAGE="ghcr.io/$(gh repo view --json nameWithOwner -q .nameWithOwner)-cart:$(git rev-parse HEAD)"
+REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner | tr '[:upper:]' '[:lower:]')
+IMAGE="ghcr.io/${REPO}-cart:$(git rev-parse HEAD)"
 
 az bicep build --file infra/main.bicep
 

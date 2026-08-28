@@ -2,3 +2,7 @@
 __pycache__/
 *.py[cod]
 
+
+# Compiled ARM output from `az bicep build`
+infra/*.json
+!infra/parameters.json

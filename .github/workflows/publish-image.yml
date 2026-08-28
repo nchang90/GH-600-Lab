@@ -18,7 +18,15 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+
+      - name: Compute the image reference
+        id: image
+        # Container registry names must be lowercase, but a GitHub repository
+        # name may contain capitals. Lowercase it rather than assuming.
+        run: |
+          repo=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "ref=ghcr.io/${repo}-cart:${{ github.sha }}" >> "$GITHUB_OUTPUT"
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -32,9 +40,9 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/${{ github.repository }}-cart:${{ github.sha }}
+          tags: ${{ steps.image.outputs.ref }}
 
       - name: Report the image reference
         run: |
           echo "Deploy this exact reference — a tag can move, a digest cannot:"
-          echo "ghcr.io/${{ github.repository }}-cart:${{ github.sha }}"
+          echo "${{ steps.image.outputs.ref }}"
