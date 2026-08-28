@@ -24,7 +24,7 @@ Work through them in order — each builds on the last.
 | [00 — Lab Preparation](labs/00-lab-preparation.md) | Prerequisites | ~30 min | Fork, tooling, passing tests, Actions enabled |
 | [01 — Prepare Agent Architecture](labs/01-agent-architecture-sdlc.md) | 1 | ~25 min | `.github/copilot-instructions.md`, task brief, lifecycle trace |
 | [02a — Build Custom Agents](labs/02a-custom-agents.md) | 2 | ~25 min | Four agents with graduated tool lists |
-| [02b — Tools, MCP & Environments](labs/02b-tools-mcp-environments.md) | 2 | ~30 min | `.mcp.json`, boundaries, cloud agent, agentic workflow |
+| [02b — Tools, MCP & Environments](labs/02b-tools-mcp-environments.md) | 2 | ~30 min | `.vscode/mcp.json`, boundaries, cloud agent, agentic workflow |
 | [03 — Memory, State & Execution](labs/03-memory-state-execution.md) | 3 | ~40 min | *(analysis)* Session logs, durable state |
 | [04 — Evaluation, Error Analysis & Tuning](labs/04-evaluation-error-analysis-tuning.md) | 4 | ~30 min | A real change, tuned instructions, a PR that is the evaluation |
 | [05 — Multi-Agent Coordination](labs/05-multi-agent-coordination.md) | 5 | ~40 min | Parallel agent review and consolidation in CI |
@@ -62,7 +62,7 @@ These guided labs turn the six official Microsoft Learn modules into one continu
     ├── copilot-setup-steps.yml      Cloud agent environment
     └── agent-evaluation.yml         Tests, scope check, agent review,
                                      consolidation                      (lab 05)
-.mcp.json                            External tool servers              (lab 02)
+.vscode/mcp.json                     External tool servers              (lab 02)
 ```
 
 ## Repo shape

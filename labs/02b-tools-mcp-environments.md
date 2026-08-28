@@ -58,60 +58,17 @@ The custom agents now need external context and a repeatable execution environme
 }
 ```
 
-VS Code reads `.vscode/mcp.json`. Copilot CLI and the cloud agent read `.mcp.json` at the repository root — same servers, but the top-level key is `mcpServers` instead of `servers`. Create both if you want the config to apply everywhere; the wrong key fails silently, which is why the Verify below checks the key name rather than just the JSON.
+VS Code requires the top-level `servers` key. This configuration:
 
-### No token
+- Uses browser-based OAuth, so no token is stored.
+- Loads only the named GitHub toolsets.
+- Withholds all write tools on the server.
 
-The remote GitHub MCP server authenticates with OAuth. You log in through the browser on first use; there is nothing to create, paste, rotate, or leak.
+Approval is not configured here. Use a hook or human approval gate for operations that require approval.
 
-This is the strongest version of the secrets rule. Lab 01 said never commit a credential. Here you go one better: **the safest credential is the one that does not exist.** Before writing a config that consumes a token, check whether the service offers OAuth instead — for the exam, and for real work.
+### Check your work
 
-If you must run the server locally in Docker a token is required — reference it as `${input:github_token}`, never inline. A shell-style `$GITHUB_TOKEN` is not interpolated in this file and would be passed through as a literal string.
-
-### Where the restriction is actually enforced
-
-Two headers do the work, and they are not equivalent:
-
-| Header | Effect | Enforced where |
-| --- | --- | --- |
-| `X-MCP-Toolsets` | Only the named toolsets load | **Server side** |
-| `X-MCP-Readonly` | Every write tool is withheld, in every loaded toolset | **Server side** |
-
-That distinction is the point of this step. A client-side allow-list is a list the client agrees to honour. These headers mean the server never offers the write tools at all — an agent cannot call `merge_pull_request` because it was never given one to call.
-
-Appending `/readonly` to the URL does the same thing: `https://api.githubcopilot.com/mcp/x/issues/readonly`.
-
-### The allow-list decision
-
-Compare your config against the fuller design in [tools/mcp.allow-list.example.json](../tools/mcp.allow-list.example.json), which sorts operations into allowed, requires-approval, and denied. Then answer: **where is each category enforced?**
-
-| Category | Enforced by | Enforced where |
-| --- | --- | --- |
-| Allowed | `X-MCP-Toolsets` | Server, at connection time |
-| Denied | `X-MCP-Readonly`, or omission from the toolset list | Server, at connection time |
-| Requires approval | ? | ? |
-
-Fill in the last row. There is no approval concept anywhere in `.mcp.json` — it exists in your design document and in no configuration you have written. Name the control that actually implements it. Lab 06 builds it; this is the gap it fills.
-
-> [!NOTE]
-> A wrong top-level key fails silently. The server simply never loads, and no error is shown.
-
-```bash
-python3 - <<'EOF'
-import json, pathlib
-for path, key in [(".vscode/mcp.json", "servers"), (".mcp.json", "mcpServers")]:
-    p = pathlib.Path(path)
-    if not p.exists():
-        print(f"SKIP: {path} not created"); continue
-    d = json.load(p.open())
-    assert key in d, f"{path} must use the top-level key '{key}'"
-    h = d[key]["github"].get("headers", {})
-    assert h.get("X-MCP-Readonly") == "true", f"{path}: write tools are not withheld"
-    print(f"PASS: {path} valid, read-only, correctly keyed")
-EOF
-```
-
-Ask an agent to merge a pull request through MCP. It should report that no such tool is available — not that it declined. Those are different failures, and only the first is a boundary.
+Ask an agent to merge a pull request through MCP. It should report that no merge tool is available.
 
 ---
 
@@ -290,7 +247,7 @@ You completed the lab if you can explain:
 
 ### MCP configuration traps
 
-- Custom agent YAML uses `mcp-servers`; repository `.mcp.json` uses `mcpServers`; **VS Code's `.vscode/mcp.json` uses plain `servers`**. The wrong one fails silently — the server simply never loads.
+- Custom agent YAML uses `mcp-servers`; **VS Code's `.vscode/mcp.json` uses plain `servers`**. The wrong key fails silently — the server simply never loads.
 - A local process has `command` and `args`. A remote HTTP or SSE server has a `url`.
 - A URL passed *inside* a local command's arguments does not make the transport remote.
 - Read access to issue context does not imply permission to merge pull requests. Allow-lists are per operation, not per server.
@@ -316,7 +273,7 @@ You completed the lab if you can explain:
 | `.github/agents/*.agent.md` | Who an agent is — persona and tool list | Runs when you select it |
 | `.github/workflows/*.yml` | Conventional CI automation | Runs on its trigger |
 | `.github/workflows/*.md` | An AI task — trigger, tools, safe outputs | Runs after `gh aw compile` |
-| `.mcp.json` / `.vscode/mcp.json` | MCP servers | Repository or editor |
+| `.vscode/mcp.json` | MCP servers | VS Code workspace |
 
 - Agentic workflows compile to `.lock.yml`; Actions runs the lock file. Commit both.
 - `gh aw validate` checks frontmatter without writing; `gh aw compile` writes the lock file.
