@@ -49,10 +49,6 @@ An allow-list says what exists. Boundaries say where it is safe to act. Evidence
 | Execution boundaries | Where may the agent act? |
 | Error handling | What happens when something fails? |
 
-### The capability progression
-
-The four agents you build in Steps 1 to 4 form a deliberate ladder, and the orchestrator sits at the top while being *less* capable than the test-runner in raw terms. Coordination authority and execution authority are separated on purpose: a coordinator that cannot edit files cannot cause damage through a reasoning error. The worst it can do is ask the wrong agent, and that agent's own limits still apply.
-
 ---
 
 ## Agent file
@@ -388,13 +384,13 @@ grep -qE '"(merge_pull_request|create_or_update_file|delete_)' .mcp.json \
 Update [templates/agent-task-brief.md](../templates/agent-task-brief.md) so its **Execution boundaries** section covers all seven scopes. Six are already there. Add the seventh:
 
 ```markdown
-### Gateway environment
+### Deployment environment
 
-- Reach MCP tools only through the endpoint named in this brief.
+- Reach the cart API and MCP tools only through the endpoints named in this brief.
 - Do not change `allowedIpAddressRange`, ingress settings, or probe configuration in `infra/resources.bicep` as part of a task.
 - Do not replace `cartApiImage` with a moving tag; the deployed build must stay identifiable.
 - Do not add environment variables or secrets to the container definition.
-- Treat `infra/` as sensitive, the same as `.github/`, `tools/`, and `infra/`.
+- Treat `infra/` as sensitive, the same as `.github/` and `tools/`.
 ```
 
 Write each boundary as a rule the agent can follow, not as a suggestion.
@@ -402,8 +398,8 @@ Write each boundary as a rule the agent can follow, not as a suggestion.
 **Verify:**
 
 ```bash
-grep -q "### Gateway environment" templates/agent-task-brief.md \
-  && echo "PASS: gateway boundary present"
+grep -q "### Deployment environment" templates/agent-task-brief.md \
+  && echo "PASS: deployment boundary present"
 grep -c "^### " templates/agent-task-brief.md
 ```
 
