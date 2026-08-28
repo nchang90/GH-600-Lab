@@ -6,7 +6,7 @@ Official study guide: <https://learn.microsoft.com/en-gb/credentials/certificati
 
 ## At a glance
 
-- **Total duration:** about 4 hours 15 minutes, including preparation.
+- **Total duration:** about 4 hours 25 minutes, including preparation.
 - **Environment:** your own fork, plus optional Azure resources for one exercise.
 - **Estimated cost:** effectively free. The optional deployment scales to zero when idle and the image lives in GitHub Container Registry, which is free for public packages. [Tear down](labs/00-lab-preparation.md#6-teardown) when you finish regardless.
 
