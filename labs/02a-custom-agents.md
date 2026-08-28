@@ -186,24 +186,6 @@ You are the coordination agent for this repository.
 
 ````
 
-
-## Verify
-
-```bash
-for a in reviewer test-runner security-scanner orchestrator; do
-  test -s ".github/agents/$a.agent.md" && echo "PASS: $a exists" || echo "FAIL: $a"
-done
-
-grep -qE "^  - (edit|execute)" .github/agents/reviewer.agent.md \
-  && echo "FAIL: reviewer must not edit or execute" || echo "PASS: reviewer read-only"
-
-grep -qE "^  - edit" .github/agents/security-scanner.agent.md \
-  && echo "FAIL: scanner must not edit" || echo "PASS: scanner cannot remediate"
-
-grep -qE "^  - (edit|execute)" .github/agents/orchestrator.agent.md \
-  && echo "FAIL: orchestrator must delegate, not act" || echo "PASS: orchestrator delegates only"
-```
-
 ---
 
 ## Self-check

@@ -6,7 +6,7 @@
 
 | Step | File | Purpose |
 | --- | --- | --- |
-| 1 | `.mcp.json` | External tool servers, read-only |
+| 1 | `.vscode/mcp.json` | External tool servers, read-only |
 | 2 | `agent-task-brief.md` | Execution boundaries an agent cannot widen |
 | 3 | `.github/workflows/copilot-setup-steps.yml` | Cloud-agent environment, then run the agent |
 | 4 | `.github/workflows/test-coverage-review.md` | An agentic workflow |
@@ -19,11 +19,11 @@
 
 ## Step 1 — Configure MCP servers
 
-**Create this file:** `.mcp.json`
+**Create this file:** `.vscode/mcp.json`
 
 ```json
 {
-  "mcpServers": {
+  "servers": {
     "github": {
       "type": "http",
       "url": "https://api.githubcopilot.com/mcp/",
@@ -35,6 +35,8 @@
   }
 }
 ```
+
+VS Code reads `.vscode/mcp.json`. Copilot CLI and the cloud agent read `.mcp.json` at the repository root — same servers, but the top-level key is `mcpServers` instead of `servers`. Create both if you want the config to apply everywhere; the wrong key fails silently, which is why the Verify below checks the key name rather than just the JSON.
 
 ### No token
 
@@ -72,12 +74,18 @@ Fill in the last row. There is no approval concept anywhere in `.mcp.json` — i
 **Verify:** a wrong top-level key fails silently — the server simply never loads, with no error.
 
 ```bash
-python3 -c "
-import json; d=json.load(open('.mcp.json'))
-assert 'mcpServers' in d, 'repository .mcp.json uses mcpServers, not servers'
-h=d['mcpServers']['github'].get('headers',{})
-assert h.get('X-MCP-Readonly')=='true', 'write tools are not withheld'
-print('PASS: valid, read-only, correctly keyed')"
+python3 - <<'EOF'
+import json, pathlib
+for path, key in [(".vscode/mcp.json", "servers"), (".mcp.json", "mcpServers")]:
+    p = pathlib.Path(path)
+    if not p.exists():
+        print(f"SKIP: {path} not created"); continue
+    d = json.load(p.open())
+    assert key in d, f"{path} must use the top-level key '{key}'"
+    h = d[key]["github"].get("headers", {})
+    assert h.get("X-MCP-Readonly") == "true", f"{path}: write tools are not withheld"
+    print(f"PASS: {path} valid, read-only, correctly keyed")
+EOF
 ```
 
 Ask an agent to merge a pull request through MCP. It should report that no such tool is available — not that it declined. Those are different failures, and only the first is a boundary.
