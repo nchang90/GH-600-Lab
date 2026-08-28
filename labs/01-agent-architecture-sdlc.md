@@ -100,10 +100,6 @@ python3 -m unittest discover -s tests
 
 **Security** defines rules that must remain true even when a task asks for a risky change.
 
-### Why the instructions use direct language
-
-Write each instruction as a rule. For example, use "Run the test suite" instead of "You may want to run the test suite." Short, imperative rules are easier for agents to follow and easier for reviewers to check.
-
 ---
 
 ## Step 2 — Verify the file

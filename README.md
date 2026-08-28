@@ -55,7 +55,7 @@ Lab 03 creates no files. It covers judgement the exam tests through log reading 
 | `labs/` | The seven lab guides |
 | `solutions/` | Sample answers, for after you attempt a lab |
 | `templates/` | Starter files the labs fill in |
-| `infra/` | Azure Bicep deployment for the cart API |
+| `infra/` | Bicep for the cart API, deployed with `azd provision` |
 | `tools/` | MCP allow-list design reference |
 | `.github/skills/gh600-exam-coach/` | The lab-guide skill |
 
@@ -83,19 +83,22 @@ python3 -m unittest discover -s tests
 
 ## The optional Azure deployment
 
-[Lab 02](labs/02-tools-mcp-environments.md) reasons about a real deployment and the network boundary around it. The template is the teaching material — you can answer every question in that lab by reading [infra/main.bicep](infra/main.bicep) without deploying anything.
+[Lab 02](labs/02-tools-mcp-environments.md) reasons about a real deployment and the network boundary around it. The template is the teaching material — you can answer every question in that lab by reading [infra/resources.bicep](infra/resources.bicep) without deploying anything.
 
 Deploy if you want Lab 04's evidence chain to reach a running service. [Lab 00, section 5](labs/00-lab-preparation.md#5-deploy-the-cart-api-optional) has the procedure, including [teardown](labs/00-lab-preparation.md#6-teardown).
 
 The deployment ships the same `app/cart.py` your tests cover:
 
+- a resource group, created by azd from your environment name
 - an Azure Container Apps managed environment (`avm/res/app/managed-environment`)
 - an Azure Container App (`avm/res/app/container-app`) running the image built by `publish-image.yml`
 - HTTPS-only ingress on port `8000`, restricted to one reviewed client CIDR
 - startup and readiness probes on `/healthz`
 - `minReplicas: 0`, so an idle deployment costs nothing
 
-Kept cheap on purpose: no Log Analytics workspace (ingestion is billed per GB), no Azure Container Registry (Basic tier bills monthly), and the smallest valid CPU and memory pairing.
+Kept cheap on purpose: no Log Analytics workspace (ingestion is billed per GB), no Azure Container Registry (Basic tier bills monthly — `azure.yaml` has no `services:` block precisely so azd does not create one), and the smallest valid CPU and memory pairing.
+
+Deploy with `azd provision`, remove with `azd down --purge`.
 
 > The API has **no authentication**. The IP restriction is the only control in front of it. Do not put credentials or private data behind this deployment.
 

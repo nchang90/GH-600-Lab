@@ -1,0 +1,21 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+
+name: gh600-cart
+metadata:
+  template: gh600-lab-cart
+
+# No `services:` block on purpose.
+#
+# azd is used here purely to deploy the Bicep: `azd provision` creates the
+# resource group and everything in it, `azd down` removes all of it. The
+# container image is still built and published by GitHub Actions to ghcr.io,
+# which is free for public packages.
+#
+# Adding a `services:` block would let `azd deploy` build and push the image
+# too, but azd would then provision an Azure Container Registry — Basic tier
+# bills monthly whether or not you pull from it.
+
+infra:
+  provider: bicep
+  path: infra
+  module: main

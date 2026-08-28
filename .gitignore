@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 
 
-# Compiled ARM output from `az bicep build`
-infra/*.json
-!infra/parameters.json
+# Compiled ARM output from `az bicep build`. main.parameters.json is NOT
+# build output - azd reads it to map environment values onto Bicep params.
+infra/main.json
+
+# azd environment state (contains local config and outputs)
+.azure/

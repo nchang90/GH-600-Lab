@@ -11,14 +11,14 @@
 | 3 | `.github/agents/security-scanner.agent.md` | Analyst that can run checks but not fix |
 | 4 | `.github/agents/orchestrator.agent.md` | Delegating coordinator |
 | 5 | `.mcp.json` | External tool servers |
-| 6 | `templates/agent-task-brief.md` | Execution boundaries, including the gateway |
+| 6 | `templates/agent-task-brief.md` | Execution boundaries, including the deployment |
 | 7 | `.github/workflows/copilot-setup-steps.yml` | Cloud-agent environment |
 
 **Prerequisite:** [Lab 01](01-agent-architecture-sdlc.md) complete.
 
 **Time:** About 45 minutes
 
-**Environment:** Step 8 reads the deployment in [infra/main.bicep](../infra/main.bicep), which ships the same cart code your agents review. You do not need it deployed — the template is the teaching material. [Lab 00, section 5](00-lab-preparation.md#5-deploy-the-cart-api-optional) has the procedure if you want a live endpoint.
+**Environment:** Step 8 reads the deployment in [infra/resources.bicep](../infra/resources.bicep), which ships the same cart code your agents review. You do not need it deployed — the template is the teaching material. [Lab 00, section 5](00-lab-preparation.md#5-deploy-the-cart-api-optional) has the procedure if you want a live endpoint.
 
 ---
 
@@ -51,20 +51,11 @@ An allow-list says what exists. Boundaries say where it is safe to act. Evidence
 
 ### The capability progression
 
-The four agents you build form a deliberate ladder:
-
-```text
-reviewer          read, search                    -> can look, cannot touch
-test-runner       read, search, edit, execute     -> can write and run
-security-scanner  read, search, execute           -> can run and inspect, cannot fix
-orchestrator      read, search, agent             -> can delegate, cannot act directly
-```
-
-The orchestrator sits at the top and is *less* capable than the test-runner in raw terms. Coordination authority and execution authority are separated on purpose: a coordinator that cannot edit files cannot cause damage through a reasoning error. The worst it can do is ask the wrong agent, and that agent's own limits still apply.
+The four agents you build in Steps 1 to 4 form a deliberate ladder, and the orchestrator sits at the top while being *less* capable than the test-runner in raw terms. Coordination authority and execution authority are separated on purpose: a coordinator that cannot edit files cannot cause damage through a reasoning error. The worst it can do is ask the wrong agent, and that agent's own limits still apply.
 
 ---
 
-## Anatomy of an agent file
+## Agent file
 
 Every file in `.github/agents/` has YAML frontmatter and a markdown body that becomes the agent's system prompt.
 
@@ -242,7 +233,7 @@ You are the security analysis agent for this repository.
 
 1. Check for committed credentials, tokens, or connection strings.
 2. Check whether workflow permissions, required checks, or branch protections were weakened.
-3. Check whether `infra/main.bicep` changed in a way that widens exposure — a broader
+3. Check whether `infra/resources.bicep` changed in a way that widens exposure — a broader
    `allowedIpAddressRange`, `ingressAllowInsecure` set to true, or a mutable image tag
    replacing an explicit commit reference.
 4. Report findings with severity and evidence.
@@ -400,7 +391,7 @@ Update [templates/agent-task-brief.md](../templates/agent-task-brief.md) so its 
 ### Gateway environment
 
 - Reach MCP tools only through the endpoint named in this brief.
-- Do not change `allowedIpAddressRange`, ingress settings, or probe configuration in `infra/main.bicep` as part of a task.
+- Do not change `allowedIpAddressRange`, ingress settings, or probe configuration in `infra/resources.bicep` as part of a task.
 - Do not replace `cartApiImage` with a moving tag; the deployed build must stay identifiable.
 - Do not add environment variables or secrets to the container definition.
 - Treat `infra/` as sensitive, the same as `.github/`, `tools/`, and `infra/`.
@@ -453,14 +444,14 @@ python3 -c "import yaml; d=yaml.safe_load(open('.github/workflows/copilot-setup-
 
 ## Step 8 — Read the environment you are securing
 
-No file to create. [infra/main.bicep](../infra/main.bicep) deploys the cart API — the same code your agents review and test — to Azure Container Apps. Open it and map each control to what it enforces:
+No file to create. [infra/resources.bicep](../infra/resources.bicep) deploys the cart API — the same code your agents review and test — to Azure Container Apps. Open it and map each control to what it enforces:
 
 | Line in the template | What it controls |
 | --- | --- |
 | `ingressTargetPort: 8000` | The only port reachable from outside |
 | `ingressAllowInsecure: false` | HTTPS only; plain HTTP is refused |
 | `ipSecurityRestrictions` with one `Allow` rule | Every source address except the reviewed CIDR is denied |
-| `cartApiImage` supplied per deployment | The running build is a specific commit, not a moving tag |
+| `cartApiImage` supplied per environment | The running build is a specific commit, not a moving tag |
 | `minReplicas: 0` | No replica runs, and nothing is billed, until a request arrives |
 | `env` containing only `PORT` | No credentials are mounted |
 | `USER appuser` in the Dockerfile | Execution inside the container cannot modify the image |
@@ -479,7 +470,7 @@ For each row, decide the retry rule, the rollback step, and the escalation trigg
 
 | Symptom | What it usually means | May an agent resolve it alone? |
 | --- | --- | --- |
-| `403` from the API URL | Your address is outside `allowedIpAddressRange` | ? |
+| `403` from the API URL | Your address is outside `ALLOWED_IP_RANGE` | ? |
 | Connection refused on plain `http://` | `ingressAllowInsecure: false` working as designed | ? |
 | First request takes several seconds | Cold start from `minReplicas: 0` | ? |
 | Revision never becomes ready | Startup probe failing on `/healthz` | ? |
@@ -548,6 +539,6 @@ You completed the lab if you can explain:
 
 ## What you built
 
-Four agents with deliberately graduated capability, a read-only MCP configuration, and a seventh execution boundary covering the deployed gateway — each tied to the real code in `app/` and the real template in [infra/main.bicep](../infra/main.bicep) rather than to a hypothetical environment.
+Four agents with deliberately graduated capability, a read-only MCP configuration, and a seventh execution boundary covering the deployment — each tied to the real code in `app/` and the real template in [infra/resources.bicep](../infra/resources.bicep) rather than to a hypothetical environment.
 
 **Next:** [Lab 03 — Manage Memory, State, and Execution](03-memory-state-execution.md)

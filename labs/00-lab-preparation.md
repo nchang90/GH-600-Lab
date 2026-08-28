@@ -31,13 +31,14 @@ Labs 01 through 06 assume sections 1 to 4 are complete. Only Lab 02 uses section
 | Python | 3.12 | `python3 --version` |
 | GitHub CLI | 2.40 | `gh --version` |
 | Azure CLI | 2.60 | `az version` |
+| Azure Developer CLI | 1.11 | `azd version` |
 
-Azure CLI is needed only for section 5. Everything else is required.
+Azure CLI and Azure Developer CLI are needed only for section 5. Everything else is required. Install azd with `brew install azure-dev-cli` on macOS, or see [the install guide](https://learn.microsoft.com/azure/developer/azure-developer-cli/install-azd).
 
 You also need:
 
 - A GitHub account with access to GitHub Copilot in your IDE and Copilot CLI.
-- For section 5 only: an Azure subscription and permission to create resources in an existing resource group.
+- For section 5 only: an Azure subscription, and permission to create a resource group in it.
 
 **Verify:**
 
@@ -103,11 +104,11 @@ You should see `Agent evaluation` and `Copilot setup steps`. If the command repo
 
 ## 5. Deploy the cart API (optional)
 
-Lab 02 reasons about a real deployment and the network boundary around it. You can complete Lab 02 by reading [infra/main.bicep](../infra/main.bicep) without deploying anything — the template is the teaching material.
+Lab 02 reasons about a real deployment and the network boundary around it. You can complete Lab 02 by reading [infra/resources.bicep](../infra/resources.bicep) without deploying anything — the template is the teaching material.
 
 Deploy if you want the evidence chain in Lab 04 to reach a running service.
 
-> **Cost.** The app scales to zero when idle, so an unused deployment is effectively free on the Consumption plan. The image lives in GitHub Container Registry, which is free for public packages — deliberately not an Azure Container Registry, whose Basic tier bills monthly whether or not you pull from it. Still complete [section 6](#6-teardown) when you finish.
+> **Cost.** The app scales to zero when idle, so an unused deployment is effectively free on the Consumption plan. The image lives in GitHub Container Registry, which is free for public packages. Still run [teardown](#6-teardown) when you finish.
 
 ### Publish the image
 
@@ -116,44 +117,42 @@ gh workflow run publish-image.yml
 gh run watch
 ```
 
-The run prints the image reference. Make the package public once, under your repository's **Packages** settings, or the pull from Azure will fail with an authentication error rather than a not-found.
+The run prints the image reference. Make the package public once, under your repository's **Packages** settings, or the pull from Azure fails with an authentication error rather than a not-found.
 
-> **Registry names are lowercase.** A GitHub repository may contain capitals; a container registry path may not. Both the workflow and the command below lowercase it — if you build the reference by hand, do the same or the push fails with `repository name must be lowercase`.
+> **Registry names are lowercase.** A GitHub repository may contain capitals; a container registry path may not. The workflow lowercases it — if you build the reference by hand, do the same or the push fails with `repository name must be lowercase`.
 
-### Validate before deploying
+### Provision with azd
+
+[Azure Developer CLI](https://learn.microsoft.com/azure/developer/azure-developer-cli/) deploys the Bicep. It creates the resource group, so there is nothing to create by hand, and it remembers your settings between runs.
 
 ```bash
+azd auth login
+azd env new gh600-lab
+```
+
+Set the two values the template needs:
+
+```bash
+azd env set ALLOWED_IP_RANGE "$(curl -s https://api.ipify.org)/32"
+
 REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner | tr '[:upper:]' '[:lower:]')
-IMAGE="ghcr.io/${REPO}-cart:$(git rev-parse HEAD)"
+azd env set CART_API_IMAGE "ghcr.io/${REPO}-cart:$(git rev-parse HEAD)"
 
-az bicep build --file infra/main.bicep
-
-az deployment group validate \
-  --resource-group <resource-group> \
-  --template-file infra/main.bicep \
-  --parameters allowedIpAddressRange="$(curl -s https://api.ipify.org)/32" \
-               cartApiImage="$IMAGE"
+azd env get-values
 ```
 
-### Deploy
-
-Review the validation output — resource names, region, image reference, and allowed CIDR — before continuing:
+Check both printed before continuing, then provision:
 
 ```bash
-az deployment group create \
-  --name cart-api \
-  --resource-group <resource-group> \
-  --template-file infra/main.bicep \
-  --parameters allowedIpAddressRange="$(curl -s https://api.ipify.org)/32" \
-               cartApiImage="$IMAGE"
+azd provision
 ```
+
+azd prompts for a subscription and region the first time, then stores them. Re-running picks up the same environment — there is no resource group name to remember and no `<placeholder>` to substitute.
 
 **Verify:**
 
 ```bash
-URL=$(az deployment group show \
-  --resource-group <resource-group> --name cart-api \
-  --query properties.outputs.cartApiUrl.value -o tsv)
+URL=$(azd env get-value CART_API_URL)
 
 curl -s "$URL/healthz"
 
@@ -165,27 +164,48 @@ Expected: `{"status": "ok"}` and `{"total": 22.0}` — the same number `tests/te
 
 The first request after an idle period takes a few seconds. That is the cold start you bought by scaling to zero.
 
-**Behavioural test:** request the same URL from a phone on mobile data. You should get a connection failure or `403`, because your phone's address is outside `allowedIpAddressRange`. That refusal is the control working, and Lab 02 asks you to reason about what it does and does not protect.
+**Behavioural test:** request the same URL from a phone on mobile data. You should get a connection failure or `403`, because your phone's address is outside `ALLOWED_IP_RANGE`. That refusal is the control working, and Lab 02 asks you to reason about what it does and does not protect.
 
 > **The API has no authentication.** The IP restriction is the only thing in front of it. Do not put credentials or private data behind this deployment, and do not widen the CIDR to make a failing request succeed.
+
+### Why azd rather than `az deployment group create`
+
+azd owns the environment, not just one deployment. It creates the resource group, tags everything with `azd-env-name`, stores your parameters, and tears the whole thing down with one command. The `az` route needed a resource group created by hand, a parameter passed on every invocation, and a teardown that deleted the group by name — three chances to get it wrong.
+
+What azd is **not** doing here is building the image. `azure.yaml` deliberately has no `services:` block, because a service with a Docker host makes azd provision an Azure Container Registry, and ACR Basic bills monthly whether or not you pull from it. GitHub Actions and ghcr.io do that part for free.
 
 ---
 
 ## 6. Teardown
 
-Azure resources bill until removed. Deleting the deployment record does not delete the resources it created:
+Azure resources bill until removed. One command removes the resource group and everything azd created in it:
 
 ```bash
-az group delete --name <resource-group> --yes --no-wait
+azd down --purge --force
 ```
 
 **Verify:**
 
 ```bash
-az group exists --name <resource-group>
+az group exists --name rg-gh600-lab
 ```
 
 Expected: `false` once deletion completes.
+
+`--purge` matters for services with soft delete, which would otherwise keep billing or block a redeploy under the same name. `--force` skips the confirmation prompt; drop it if you want to be asked.
+
+---
+
+## If setup fails
+
+| Symptom | Likely cause | Fix |
+| --- | --- | --- |
+| `ModuleNotFoundError: No module named 'app'` | Not in the repository root | `cd` to the root and rerun |
+| `gh workflow list` shows nothing | Actions not enabled on the fork | Section 4 |
+| `repository name must be lowercase` | Registry path built from a repo name containing capitals | Lowercase it with `tr '[:upper:]' '[:lower:]'` |
+| `azd provision` cannot find a parameter | `ALLOWED_IP_RANGE` or `CART_API_IMAGE` not set | `azd env get-values`, then `azd env set` the missing one |
+| Container app never becomes ready | Startup probe failing on `/healthz` | `az containerapp logs show`; usually the image was never published or the package is private |
+| Deployment succeeds, `curl` returns `403` | Your public IP changed since provisioning | `azd env set ALLOWED_IP_RANGE` with the new address, then `azd provision` |
 
 ---
 
