@@ -2,7 +2,7 @@
 
 **Goal:** understand where agent state actually lives, how a session is resumed, and which storage mechanism fits each kind of state.
 
-**You will create:** nothing — this lab is analysis and judgement.
+**You will create:** nothing. This lab is analysis and judgement — the concepts it establishes are applied directly in Labs 04 and 05.
 
 **Prerequisite:** [Lab 02](02-tools-mcp-environments.md) complete.
 
@@ -38,7 +38,7 @@ The point is not to ask for more memory. It is to change what goes into the bund
 
 ## Task 1 — Read a session log
 
-Here is a Copilot CLI log. Work out what it tells you before reading on.
+Read the log and answer the questions below.
 
 ```text
 2026-08-25T08:31:03Z session.id=run-42 cwd=/workspace/GH-600Lab
@@ -53,18 +53,17 @@ Here is a Copilot CLI log. Work out what it tells you before reading on.
 **Questions**
 
 1. New session or resumed?
-2. Which IDE is connected?
-3. Which MCP servers are loaded?
-4. What autonomy level does this agent have?
-5. What sequence of tools did it use?
+2. What autonomy level does this agent have?
+3. What sequence of tools did it use?
 
-Answers
+<details>
+<summary>Answers</summary>
 
 1. **New session.** There is no `resume=true` and no line loading `events.jsonl`.
-2. **Visual Studio Code.**
-3. **`github` and `playwright`.**
-4. **Medium.** It used `read`, `search`, `edit`, and `execute`.
-5. **search → read → edit → execute.**
+2. **Medium.** It used `read`, `search`, `edit`, and `execute`.
+3. **search → read → edit → execute.**
+
+</details>
 
 ### What the sequence means
 
@@ -74,7 +73,9 @@ Good agent work finds context, reads it, changes it, and verifies it.
 
 ## Task 2 — Match each scenario to the right storage
 
-Write the matching letter (A-E) next to each number.
+Write the matching letter (A–E) next to each number.
+
+**Options:** A) Session ID / session-state · B) Workflow artifact or job output · C) PR comment / review · D) Instructions or repository memory · E) Session logs / PR timeline
 
 | # | Scenario |
 | --- | --- |
@@ -84,15 +85,16 @@ Write the matching letter (A-E) next to each number.
 | 4 | Store a long-term repository convention |
 | 5 | Track what an agent did and why |
 
-**Options:** A) Session ID / session-state · B) Workflow artifact or job output · C) PR comment / review · D) Instructions or repository memory · E) Session logs / PR timeline
-
-Answers
+<details>
+<summary>Answers</summary>
 
 1. **A — Session ID / session-state.** Use `--resume` or `--continue`.
 2. **B — Workflow artifact or job output.** `$GITHUB_OUTPUT` for small values, `upload-artifact` for files.
 3. **C — PR comment / review.** Auditable, attributable, visible to every reviewer, and attached to the change it describes.
 4. **D — Instructions or repository memory.** Persists across all sessions and all agents.
 5. **E — Session logs / PR timeline.** The record of what actually happened.
+
+</details>
 
 ### Decision vs event
 
@@ -115,12 +117,15 @@ This one is hands-on, and it takes two minutes.
 3. Your team has a rule that every new endpoint needs a test. Copilot Memory or `copilot-instructions.md`?
 4. Copilot cites a repository fact that was true last month but the code has since changed. What happens?
 
-Answers
+<details>
+<summary>Answers</summary>
 
 1. **Probably, but do not depend on it.** Repository-level facts are shared with anyone who has access to Copilot Memory in that repository — but only if Memory is enabled and the fact still passes revalidation.
 2. **A user-level preference, affecting only you**, across every repository you work in. Your teammates see no change.
 3. **`copilot-instructions.md`.** It is a rule you want enforced for everyone, reviewable in a PR, and versioned with the code.
 4. **It is discarded.** Facts are stored with citations, and Copilot revalidates the citation against the current branch before using the fact.
+
+</details>
 
 ---
 
@@ -137,6 +142,18 @@ It happens when:
 The symptom is characteristic: the agent behaves consistently but incorrectly, and patiently re-explaining does not help, because the flawed assumption is still sitting in context alongside your correction.
 
 What works: start a fresh session, and put the important facts somewhere durable so the new session picks them up automatically. If the same correction is needed twice, it belongs in `copilot-instructions.md`.
+
+---
+
+## Self-check
+
+You completed the lab if you can answer without looking:
+
+- How do you tell a new session from a resumed one in a log?
+- Which four kinds of state exist, and which of them survives a machine change?
+- Where does a rule belong when it must apply to everyone and be reviewable?
+- Why is Copilot Memory the wrong home for a team standard?
+- What is the fix for context drift, and why is re-explaining not it?
 
 ---
 

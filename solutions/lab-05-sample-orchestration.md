@@ -1,34 +1,42 @@
-# Lab 05 Sample: Multi-Agent Orchestration
+# Lab 05 Sample: Multi-Agent Coordination
 
-## Pattern
+Compare this only after you have written your own Step 1 pattern choice and Step 4 conflict rules.
 
-Use a human-in-the-loop coordinator with sequential handoff:
+## Step 1 — Pattern
 
-1. Planner agent writes plan.
-2. Human approves scope.
-3. Implementation agent changes code and tests.
-4. Reviewer agent evaluates plan adherence, tests, changed files, and risks.
-5. Human approves or requests changes.
+**Parallel isolated with merge review.**
 
-## Isolation boundaries
+The reviewer, test-runner, and security-scanner examine the same diff. None consumes another's
+output, so sequencing them would triple wall-clock time for no benefit. Two of the three cannot
+write, which is what makes parallelism safe here — isolation is cheap when nothing contends for
+the same files.
 
-| Agent | Workspace | Allowed files | Tools | Stop condition |
-| --- | --- | --- | --- | --- |
-| Planner | Planning branch or artifact-only session | `.github/submissions/**` | Repo read | Plan complete or sensitive scope found |
-| Implementation | Feature branch | Approved app/test files | Repo read/write, test runner | Tests pass or blocked |
-| Reviewer | Read-only review context | None | Repo read, logs read | Report complete |
+A human-in-the-loop coordinator would be correct for a change that deploys or alters governance.
+It is the wrong default for a code review, because it adds a gate at every transition without
+reducing any risk the pull request itself does not already gate.
 
-## Required artifacts
+## Step 4 — Conflict and degraded-behaviour rules
 
-| Agent | Required artifact | Reviewer |
-| --- | --- | --- |
-| Planner | Structured plan | Human coordinator |
-| Implementation | Pull request and task state | Reviewer agent |
-| Reviewer | Evaluation report | Human coordinator |
+| Failure | Rule |
+| --- | --- |
+| Two agents give contradictory recommendations | Report both positions in the consolidated output with the file and line each cites. The consolidator does not pick a winner; a human resolves it in review. |
+| An agent stalls and hits the job timeout | `fail-fast: false` keeps the others running. The consolidation job lists the agent under "did not report". Re-run that matrix leg only; do not re-run the whole workflow. |
+| An agent produces partial output | Treat partial as absent. Upload whatever exists as evidence, but do not let a truncated report count as a clean pass. |
+| Two agents report the same finding | Keep both. Independent agreement from a reviewer and a security-scanner is a stronger signal than either alone, and de-duplicating hides that. |
+| Every agent passes but the human disagrees | The disagreement must produce a change: a checklist item, an instruction, or a new agent. An evaluation that changes nothing is an opinion, not a signal. |
 
-## Conflict handling
+## Why the consolidation job names missing agents
 
-- Overlapping changes: stop automatic merge and require coordinator review.
-- Contradictory recommendations: record rationale and decision in PR.
-- Stalled agent: preserve artifacts, reassign, or retry with same state.
-- Partial output: do not merge until required artifacts and checks are complete.
+A report that silently omits a crashed agent is indistinguishable from one where that agent found
+nothing — and those are opposite conclusions. Enumerating non-reporters is what stops the
+consolidated output from overstating its own coverage.
+
+## Isolation, mechanically
+
+| Mechanism | What it isolates |
+| --- | --- |
+| `strategy.matrix` | Each agent gets its own runner, checkout, and filesystem |
+| `fail-fast: false` | One agent's failure does not cancel the others' completed work |
+| `upload-artifact` | The handoff is a file, not a variable, log line, or shared context |
+| `needs: test` | No agent reviews a change whose tests have not run |
+| `if: always()` | A partial result still reaches a human |

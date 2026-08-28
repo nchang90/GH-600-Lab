@@ -20,20 +20,20 @@
 - Protect default branch.
 - Require pull request before merge.
 - Require passing unit tests and security checks.
-- Require CODEOWNER review for `.github/**`, `tools/**`, and `policies/**`.
+- Require CODEOWNER review for `.github/**`, `tools/**`, and `infra/**`.
 - Block force pushes to protected branches.
 - Require signed commits if organization policy requires them.
 - Require branches created by agents to use a recognizable prefix such as `agent/`.
 
 ## CODEOWNERS review proposal
 
-Record these paths in `.github/submissions/codeowners-review-proposal.md` before applying them to `.github/CODEOWNERS`:
+Apply these paths to `.github/CODEOWNERS`, and record the reasoning in the pull request body:
 
 - `.github/copilot-instructions.md` should require platform-owner review because it changes agent behavior.
 - `.github/workflows/**` should require platform-owner review because it controls automation permissions and checks.
 - `.github/agents/**` should require platform-owner review because it changes custom agent definitions.
 - `tools/**` should require platform-owner review because it controls MCP and external tool access.
-- `policies/**` should require security-owner review because it defines governance expectations.
+- `infra/**` should require security-owner review because it defines the deployed network boundary.
 
 ## Accountability checklist
 

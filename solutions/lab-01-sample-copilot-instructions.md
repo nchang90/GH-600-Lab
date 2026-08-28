@@ -23,4 +23,4 @@
 
 - Never commit credentials, tokens, or secrets.
 - Never weaken review, approval, or branch protections.
-- Treat `.github/`, `policies/`, and `tools/` as sensitive paths.
+- Treat `.github/`, `tools/`, and `infra/` as sensitive paths.

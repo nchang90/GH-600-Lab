@@ -5,41 +5,21 @@ description: Guide learners through the six hands-on GH-600 labs in this reposit
 
 # GH-600 Lab Guide
 
-Guide the learner through the repository labs in order:
+Work through the numbered labs in `labs/` in order, starting at `labs/00-lab-preparation.md`. Sample solutions are `solutions/lab-0N-sample-*.md`.
 
-1. `labs/01-agent-architecture-sdlc.md`
-2. `labs/02-tools-mcp-environments.md`
-3. `labs/03-memory-state-execution.md`
-4. `labs/04-evaluation-error-analysis-tuning.md`
-5. `labs/05-multi-agent-coordination.md`
-6. `labs/06-guardrails-accountability.md`
+Each lab step ends with a **Verify** block. Run it, or have the learner run it, before moving to the next step — a step is not complete until its verification passes.
 
-The current [official Microsoft Learn study guide](https://learn.microsoft.com/en-us/credentials/certifications/resources/study-guides/gh-600) is the source of truth for exam objectives. Use [references/domain-map.md](references/domain-map.md) only to map a lab to its official domain. Use [references/artifact-guide.md](references/artifact-guide.md) only when the current lab needs help with a GitHub artifact.
+Each lab names its own exam domain in its title and carries its own exam notes. The [official study guide](https://learn.microsoft.com/en-us/credentials/certifications/resources/study-guides/gh-600) is the source of truth for exam objectives.
 
 ## Lab workflow
 
-1. Open the requested lab. If no lab is specified, begin with Lab 01.
+1. Open the requested lab. If no lab is specified, begin with Lab 00.
 2. Briefly state what the lab teaches and what artifact the learner must create.
 3. Work through one numbered task at a time.
-4. Let the learner attempt the task before showing the sample solution.
+4. Let the learner attempt each task before showing the matching sample solution.
 5. Check the learner's artifact against the lab's self-check.
-6. Use the matching file in `solutions/` only after the learner has attempted the task.
-7. When the lab is complete, summarize what was created and point to the next lab.
+6. When the lab is complete, summarize what was created and point to the next lab.
 
-Keep explanations short and practical. Stay within the current lab instead of adding quizzes, study plans, mock exams, or readiness assessments.
+Structure lab responses as: current lab, your task, what to create, check, next step.
 
-## Response format
-
-```markdown
-## Current lab
-
-## Your task
-
-## What to create
-
-## Check
-
-## Next step
-```
-
-Do not edit a learner's submission unless the learner explicitly asks for changes.
+Keep explanations short and practical. Stay within the current lab instead of adding quizzes, study plans, mock exams, or readiness assessments. Do not edit a learner's submission unless the learner explicitly asks for changes.

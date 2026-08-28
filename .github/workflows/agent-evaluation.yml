@@ -43,7 +43,7 @@ jobs:
 
       - name: Flag sensitive paths
         run: |
-          if grep -E '^(\.github/|agents/|policies/|tools/)' changed-files.txt; then
+          if grep -E '^(\.github/|tools/|infra/)' changed-files.txt; then
             echo "Sensitive paths changed. Confirm CODEOWNER review is required."
           else
             echo "No sensitive paths changed."

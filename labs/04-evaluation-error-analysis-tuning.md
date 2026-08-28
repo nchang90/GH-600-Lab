@@ -1,25 +1,20 @@
-# Lab 04 — Perform Evaluation, Error Analysis & Tuning
+# Lab 04 — Perform Evaluation, Error Analysis, and Tuning (Domain 4)
 
-**Goal:** learn to diagnose why an agent failed and fix the right layer, rather than guessing.
+**Goal:** diagnose why an agent run failed, fix the right layer, and produce evidence a reviewer can check without having been there.
 
 **You will create:**
 
-- `.github/submissions/evaluation-report-loyalty-discount.md`
-- `.github/submissions/instruction-tuning-proposal.md`
+| Step | Artifact | Purpose |
+| --- | --- | --- |
+| 3 | `app/cart.py` and `tests/test_cart.py` | The change, done correctly |
+| 4 | `.github/copilot-instructions.md` | One measurable instruction that prevents the failure |
+| 5 | A pull request on `agent/loyalty-discount` | The evaluation report itself |
+
+Steps 1 and 2 create nothing — they are the failure analysis the rest of the lab acts on.
 
 **Prerequisite:** [Lab 03](03-memory-state-execution.md) complete.
 
-**Time:** About 25 minutes
-
-## Exam focus
-
-- Define success criteria and evaluation signals.
-- Analyze agent failures and identify root causes.
-- Tune agent behavior based on evaluation results.
-
-## Scenario
-
-An agent attempted to add loyalty discount support but failed CI and modified an unrelated workflow. You need to evaluate the output, classify the failure, and tune future behavior.
+**Time:** About 30 minutes
 
 ---
 
@@ -27,15 +22,13 @@ An agent attempted to add loyalty discount support but failed CI and modified an
 
 When someone asks whether an agent is working well, the tempting answer is an impression — the output looked thorough, the reasoning seemed sound. That is not evaluation.
 
-Evaluation means evidence: test results, scan findings, status checks, uploaded artifacts, session logs. Each is independently checkable by someone who was not there.
-
-If the evidence is weak, tuning the model is usually the wrong fix. Work through the cheaper layers first.
+Evaluation means evidence: test results, scan findings, status checks, uploaded artifacts, session logs. Each is independently checkable by someone who was not there. This lab is deliberately not a document-writing exercise, because a write-up nobody can verify is the exact failure mode Domain 4 is about.
 
 ---
 
 ## The tuning order
 
-When an agent misbehaves, work through the layers in this order.
+When an agent misbehaves, work through the layers in this order:
 
 ```text
 1. Prompt / task clarity
@@ -44,65 +37,219 @@ When an agent misbehaves, work through the layers in this order.
 4. Setup / environment
 5. Repository state
 6. Memory / session state
-7. Model choice          ← LAST
+7. Model choice          <- LAST
 ```
 
-The order is not arbitrary. It runs from cheapest and most likely, to most expensive and least likely.
+The order runs from cheapest and most likely, to most expensive and least likely. Model choice is last because it is almost never the cause. If the agent could not find your test command, no model solves that — the information was not in its context.
 
-Model choice is last because it is almost never the cause. If the agent could not find your test command, no model solves that — the information was not in its context.
+---
 
-## Tasks
+## Step 1 — Analyze the failed run
 
-### 1. Define evaluation signals
+An agent was asked to add loyalty discount support to the cart. It produced code that passed on its own machine and failed in CI. Here is the record — read it as evidence, not as narrative.
 
-Open `templates/evaluation-report.md` and create `.github/submissions/evaluation-report-loyalty-discount.md`.
+**Task given to the agent**
 
-Include signals from:
+> Add loyalty discount support to the cart. A customer with a loyalty tier should get a
+> percentage off the subtotal before tax is applied. Add tests.
 
-- Unit tests
-- Static checks
-- Code review comments
-- Changed file list
-- Plan adherence
-- Security scanning
-- Workflow logs
+Branch `agent/loyalty-discount`, medium autonomy: `read`, `search`, `edit`, `execute`.
 
-### 2. Analyze the failed run
+**Session log (abridged)**
 
-Read `artifacts/inputs/failed-agent-run.md`.
+```text
+2026-08-26T10:02:11Z session.id=run-88 cwd=/workspace/GH-600Lab
+2026-08-26T10:02:19Z tool=search args="discount"
+2026-08-26T10:02:21Z tool=read args="app/cart.py"
+2026-08-26T10:02:44Z tool=edit args="app/cart.py"
+2026-08-26T10:03:02Z tool=execute args="pytest"
+2026-08-26T10:03:03Z stderr="command not found: pytest"
+2026-08-26T10:03:29Z tool=execute args="python3 -m pytest"
+2026-08-26T10:03:30Z stderr="No module named pytest"
+2026-08-26T10:04:07Z tool=edit args="requirements.txt"
+2026-08-26T10:04:20Z tool=execute args="pip install pytest"
+2026-08-26T10:04:55Z tool=edit args="tests/test_cart.py"
+2026-08-26T10:05:31Z tool=execute args="python3 -m pytest tests/"
+2026-08-26T10:05:33Z stdout="2 passed"
+2026-08-26T10:06:10Z tool=edit args=".github/workflows/agent-evaluation.yml"
+2026-08-26T10:06:44Z tool=execute args="git push origin agent/loyalty-discount"
+```
 
-Classify each issue as one of:
+**What the diff contained**
 
-- Reasoning error
-- Tool misuse
-- Context issue
-- Environment issue
-- Governance issue
-- Test coverage issue
+```text
+ app/cart.py                            | 14 ++++++++++----
+ tests/test_cart.py                     |  9 +++++----
+ requirements.txt                       |  1 +
+ .github/workflows/agent-evaluation.yml |  4 ++--
+```
 
-### 3. Propose instruction tuning
+```python
+def calculate_total(items, tax_rate=0.0, loyalty_discount=0.0):
+    subtotal = calculate_subtotal(items)
+    discounted = subtotal * (1 - loyalty_discount)
+    return round(discounted * (1 + tax_rate), 2)
+```
 
-Create `.github/submissions/instruction-tuning-proposal.md` with two improvements that would prevent the failure.
+The `tax_rate < 0` guard that opened the function is gone. Four tests were rewritten in `pytest` style, and `test_rejects_negative_tax_rate` was deleted with the message "remove test for behaviour no longer present". The workflow's `python -m unittest discover -s tests` became `python -m pytest tests/`.
 
-Do not add broad instructions like "be careful." Make the instructions measurable. If you apply the proposal to `.github/copilot-instructions.md` in a real repository, treat that as a sensitive-path change and require reviewer attention.
+**CI result**
 
-### 4. Tune tool access
+```text
+Unit tests ................ FAIL   ModuleNotFoundError: No module named 'pytest'
+Sensitive file scope check  FAIL   .github/ changed — CODEOWNER review required
+```
 
-Update `.github/submissions/mcp-allow-list-decision.md` or create it if you have not completed Lab 02. Explain which tool access should be changed and why.
+Classify each finding. Use exactly one category per finding:
+
+| Category | Means |
+| --- | --- |
+| Reasoning error | The agent's logic was wrong |
+| Tool misuse | It used a capability it should not have, or used one badly |
+| Context issue | It lacked information that exists somewhere in the repo |
+| Environment issue | Its environment differed from CI's |
+| Governance issue | It changed something that required review |
+| Test coverage issue | It removed or failed to add necessary tests |
+
+**Findings to classify**
+
+1. It ran `pytest`, which is not installed and is not this repository's test runner.
+2. It edited `requirements.txt` and ran `pip install` to make its chosen runner work.
+3. It deleted `test_rejects_negative_tax_rate`.
+4. It removed the `tax_rate < 0` guard from `calculate_total`.
+5. It edited `.github/workflows/agent-evaluation.yml` to change the CI test command.
+6. The suite passed locally and failed in CI.
+
+<details>
+<summary>Answers</summary>
+
+1. **Context issue.** The correct command is in `.github/copilot-instructions.md` and in the workflow. The agent had access to both and used neither. Note this is *not* a reasoning error — the information existed; the agent did not retrieve it.
+2. **Tool misuse.** Changing dependency manifests to accommodate a preference is scope expansion. The task was a discount calculation.
+3. **Test coverage issue.** The commit message — "remove test for behaviour no longer present" — is circular: the behaviour is absent because finding 4 removed it.
+4. **Reasoning error.** Refactoring the function silently dropped validation. The agent did not notice because it had already deleted the test that would have caught it.
+5. **Governance issue.** An agent editing the workflow that grades it can grant itself a passing result. This is the most serious finding, and the only one where severity comes from *who* made the change rather than what it did.
+6. **Environment issue.** The runner installs no dependencies. Passing locally is not evidence.
+
+</details>
+
+### The pattern in the answers
+
+Findings 3 and 4 form a loop: the agent removed a guard, then removed the test that proved the guard mattered, and the suite went green. **A passing test suite is only evidence if the tests did not change in the same commit.** That is why the diff and the test result must be read together — either alone is misleading.
+
+---
+
+## Step 2 — Rank by severity, and justify the ranking
+
+Order the six findings by severity, then answer:
+
+- Which finding did the test suite detect? Which did it miss entirely?
+- Which finding would still be invisible if CI had passed?
+- Which single control, if it had existed, would have stopped the most findings?
+
+<details>
+<summary>Discussion</summary>
+
+CI caught findings 1 and 5 — one by failing, one by the scope check. It could not catch 3 and 4, because the agent removed the evidence in the same commit. Finding 4 is the actual defect a customer would hit; it is also the one with the weakest detection story.
+
+The highest-leverage control is a path restriction preventing agents from editing `.github/**`. It stops finding 5 outright, and it makes finding 1 self-correcting, because an agent that cannot change the CI command has to satisfy the existing one.
+
+</details>
+
+---
+
+## Step 3 — Do the change properly
+
+Now make the change the agent should have made.
+
+```bash
+git checkout -b agent/loyalty-discount
+```
+
+Add loyalty discount support to `app/cart.py`, keeping every existing guard, and add tests to `tests/test_cart.py` covering:
+
+- a discount applied before tax
+- a zero discount leaving the total unchanged
+- a negative discount rejected with `ValueError`
+- a discount above `1.0` rejected with `ValueError`
+
+**Verify:**
+
+```bash
+python3 -m unittest discover -s tests
+git diff --name-only main...HEAD
+```
+
+The test run must pass, and the changed-file list must contain only `app/cart.py` and `tests/test_cart.py`. If `.github/` or `infra/` appears, you have reproduced finding 5.
+
+---
+
+## Step 4 — Tune the right layer
+
+The tuning order says instructions come second, after task clarity. Add **one** rule to `.github/copilot-instructions.md` that would have prevented finding 1 or finding 5.
+
+Make it measurable. "Be careful with workflows" is not a rule — a reviewer cannot tell whether it was followed. "Do not edit `.github/**` unless the task brief lists those paths in scope" is checkable against a diff.
+
+> **This is a sensitive-path change.** `.github/` is on your own sensitive list, so this edit needs reviewer attention — including when you are the one making it. Lab 06 builds the control that enforces this rather than requesting it.
+
+**Verify:**
+
+```bash
+test -s .github/copilot-instructions.md
+git diff main...HEAD -- .github/copilot-instructions.md
+```
+
+Read your own diff and ask whether a reviewer could tell, from a future PR's changed-file list alone, whether the rule was followed. If not, rewrite it.
+
+---
+
+## Step 5 — Open the pull request
+
+Push the branch and open a PR. **The PR body is your evaluation report** — not a file in the repository.
+
+This is the point of the lab. Lab 03 established that durable, auditable state lives in pull requests, artifacts, and logs. An evaluation report committed as a markdown file is a document about evidence; a PR body sits attached to the diff, the test run, and the reviewer's approval, which *are* the evidence.
+
+[templates/evaluation-report.md](../templates/evaluation-report.md) is the structure. Fill in a copy and pass it straight to `gh`:
+
+```bash
+cp templates/evaluation-report.md /tmp/evaluation.md
+# fill it in, then:
+gh pr create --title "Add loyalty discount support" --body-file /tmp/evaluation.md
+```
+
+Every `TBD` in that template is a cell you must replace. The **Evidence** column takes something a reviewer can click or run — a workflow run URL, a command and its output, a file path. A cell reading "verified" is not evidence.
+
+Two of the template's signals have no automated source in this repository: `Static checks` and `Security scan`. Write `not configured` rather than inventing a result, and note what you would add. **A signal you did not collect is not a signal that passed** — and an evaluation that quietly omits its gaps is the same failure as a consolidated report that hides a crashed agent.
+
+**Verify:**
+
+```bash
+gh pr view --json statusCheckRollup --jq '.statusCheckRollup[] | "\(.name): \(.conclusion)"'
+```
+
+Both `Unit tests` and `Sensitive file scope check` should report `SUCCESS`.
+
+---
 
 ## Self-check
 
 You completed the lab if you can explain:
 
-- Which signal detected each failure
-- Whether the root cause was reasoning, tools, context, environment, or governance
-- Which instruction change was proposed
-- Which tool permission changed
+- Which signal detected each of the six findings, and which findings no signal caught
+- Why a passing test suite was not evidence in the failed run
+- Which layer of the tuning order you changed, and why not a higher-numbered one
+- Why the evaluation report belongs in the pull request rather than in a committed file
 - How you would know the next run improved
+
+---
 
 ## Exam notes
 
-Evaluation is broader than "tests passed." GH-600 expects you to use plans, logs, traces, artifacts, workflow output, changed files, scans, and human review as evaluation signals.
+- Evaluation is broader than "tests passed." GH-600 expects plans, logs, traces, artifacts, workflow output, changed files, scans, and human review as evaluation signals.
+- **Model choice is step 7 of 7.** If an answer option proposes switching models before checking instructions, tool scope, or environment, it is wrong.
+- Instructions guide behaviour; they do not enforce it. A question asking how to *prevent* an edit is asking about tool scope, hooks, or branch protection — not about a better-worded instruction.
+- Evidence must be independently checkable. "The agent reported success" is not a signal.
+
+---
 
 ## Common pitfalls
 
@@ -111,3 +258,15 @@ Evaluation is broader than "tests passed." GH-600 expects you to use plans, logs
 **Treating instructions as a security control.** They guide behaviour; they do not enforce it.
 
 **Judging agent quality by how good the output reads.** Evaluate on evidence, not prose quality.
+
+**Accepting a green suite without reading the diff.** If the tests changed in the same commit, the green is unearned.
+
+**Writing the evaluation as a file nobody opens.** Attach it to the change it describes.
+
+---
+
+## What you built
+
+A classified failure analysis, a correct implementation on a branch, one measurable instruction change, and a pull request whose body is the evaluation report — with every signal backed by something a reviewer can independently check.
+
+**Next:** [Lab 05 — Multi-Agent Coordination](05-multi-agent-coordination.md)

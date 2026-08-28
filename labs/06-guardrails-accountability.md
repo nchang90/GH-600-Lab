@@ -4,11 +4,11 @@
 
 **You will create:**
 
-| File | Purpose |
-| --- | --- |
-| `.github/hooks/pre-tool-policy.json` | Hook configuration |
-| `.github/hooks/scripts/pre-tool-policy.sh` | Deny dangerous commands |
-| `.github/hooks/scripts/post-edit-check.sh` | Audit trail after edits |
+| Step | File | Purpose |
+| --- | --- | --- |
+| 1 | `.github/hooks/pre-tool-policy.json` | Hook configuration |
+| 2 | `.github/hooks/scripts/pre-tool-policy.sh` | Deny dangerous commands |
+| 3 | `.github/hooks/scripts/post-edit-check.sh` | Audit trail after edits |
 
 **Prerequisite:** [Lab 05](05-multi-agent-coordination.md) complete.
 
@@ -297,12 +297,24 @@ echo '{"toolName":"bash","toolArgs":"git push origin main"}' \
   | .github/hooks/scripts/pre-tool-policy.sh
 # expect: {"permissionDecision": "deny", ...}
 
-echo '{"toolName":"bash","toolArgs":"dotnet test"}' \
+echo '{"toolName":"bash","toolArgs":"python3 -m unittest discover -s tests"}' \
   | .github/hooks/scripts/pre-tool-policy.sh
 # expect: {"permissionDecision": "allow"}
 ```
 
 This works because the hook contract is just stdin and stdout — the script is testable without an agent.
+
+---
+
+## Self-check
+
+You completed the lab if you can explain:
+
+- Which of the three control categories each artifact you built belongs to
+- Why `ask` is not a safe decision in a cloud agent
+- Why the hook and branch protection are both needed for the same rule
+- The difference between a hook `toolName` and an agent `tools` entry
+- What your hook cannot stop, and which control covers that gap
 
 ---
 

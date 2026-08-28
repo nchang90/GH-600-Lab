@@ -1,5 +1,12 @@
 name: Copilot setup steps
 
+# The Copilot coding agent reads this file to prepare its environment before it
+# starts work. The job MUST be named `copilot-setup-steps` for it to be picked up.
+#
+# Setup prepares the environment. It does not validate the code — the agent runs
+# the test suite itself once it is working. Running tests here would mean a failing
+# test prevents the agent's environment from ever becoming ready.
+
 on:
   workflow_dispatch:
 
@@ -19,6 +26,7 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Verify test command
-        run: python -m unittest discover -s tests
-
+      # This repository has no third-party dependencies — app/ and tests/ import
+      # only `dataclasses` and `unittest` from the standard library. A repository
+      # with a requirements.txt would install it here, and that install is the
+      # whole reason this file exists.

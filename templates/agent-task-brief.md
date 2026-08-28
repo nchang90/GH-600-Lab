@@ -22,7 +22,7 @@
 
 - Work only in the repository named in this brief.
 - Do not change files outside the approved file list.
-- Treat `.github/`, `policies/`, and `tools/` as sensitive and do not edit them unless they are explicitly listed as in scope.
+- Treat `.github/`, `tools/`, and `infra/` as sensitive and do not edit them unless they are explicitly listed as in scope.
 
 ### Branch scope
 
