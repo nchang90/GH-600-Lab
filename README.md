@@ -6,7 +6,7 @@ Official study guide: <https://learn.microsoft.com/en-gb/credentials/certificati
 
 ## At a glance
 
-- **Total duration:** about 3 hours 45 minutes, including preparation.
+- **Total duration:** about 3 hours 55 minutes, including preparation.
 - **Environment:** your own fork, plus optional Azure resources for one exercise.
 - **Estimated cost:** effectively free. The optional deployment scales to zero when idle and the image lives in GitHub Container Registry, which is free for public packages. [Tear down](labs/00-lab-preparation.md#6-teardown) when you finish regardless.
 
@@ -17,7 +17,7 @@ Work through them in order — each builds on the last.
 | Lab | Domain | Time | What you build |
 | --- | --- | --- | --- |
 | [00 — Lab Preparation](labs/00-lab-preparation.md) | Prerequisites | ~30 min | Fork, tooling, passing tests, Actions enabled |
-| [01 — Prepare Agent Architecture](labs/01-agent-architecture-sdlc.md) | 1 | ~15 min | `.github/copilot-instructions.md` |
+| [01 — Prepare Agent Architecture](labs/01-agent-architecture-sdlc.md) | 1 | ~25 min | `.github/copilot-instructions.md`, task brief, lifecycle trace |
 | [02 — Tool Use & Environment](labs/02-tools-mcp-environments.md) | 2 | ~45 min | Four agents, `.mcp.json`, execution boundaries |
 | [03 — Memory, State & Execution](labs/03-memory-state-execution.md) | 3 | ~30 min | *(analysis)* Session logs, durable state |
 | [04 — Evaluation, Error Analysis & Tuning](labs/04-evaluation-error-analysis-tuning.md) | 4 | ~30 min | A real change, tuned instructions, a PR that is the evaluation |
