@@ -99,15 +99,6 @@ For every finding, report:
 If no defects are found, state that clearly and name the remaining test gaps.
 ````
 
-**Verify:**
-
-```bash
-test -s .github/agents/reviewer.agent.md && echo "PASS: file non-empty"
-grep -q "description:" .github/agents/reviewer.agent.md && echo "PASS: has description"
-grep -qE "^  - (edit|execute)" .github/agents/reviewer.agent.md \
-  && echo "FAIL: reviewer must not have edit or execute" \
-  || echo "PASS: read-only"
-```
 
 **Behavioural test:** select `reviewer` in the agent picker and ask it to fix a bug in `app/cart.py`. It should report the bug and decline to change the file. That refusal is the feature.
 
@@ -159,14 +150,6 @@ Run from the repository root. The tests import `app.cart`, which resolves only f
 - **Action taken**: what you changed, or why you changed nothing
 ````
 
-**Verify:**
-
-```bash
-test -s .github/agents/test-runner.agent.md && echo "PASS: file non-empty"
-grep -q "python3 -m unittest discover -s tests" .github/agents/test-runner.agent.md \
-  && echo "PASS: names the real command"
-```
-
 **Behavioural test:** break an assertion in `tests/test_cart.py`, then ask `test-runner` to investigate. It should identify the specific failing test and say whether the fault is in the test or in `app/cart.py`.
 
 ---
@@ -211,17 +194,6 @@ You are the security analysis agent for this repository.
 - **Recommended remediation** (for a human or the test-runner to apply)
 ````
 
-**Verify:**
-
-```bash
-test -s .github/agents/security-scanner.agent.md && echo "PASS: file non-empty"
-grep -qE "^  - edit" .github/agents/security-scanner.agent.md \
-  && echo "FAIL: scanner must not have edit" \
-  || echo "PASS: cannot remediate"
-```
-
----
-
 ## Step 4 — The orchestrator agent
 
 **Create this file:** `.github/agents/orchestrator.agent.md`
@@ -263,16 +235,6 @@ A single consolidated report with one section per delegated agent, then a
 **Conflicts** section, then an overall recommendation.
 ````
 
-**Verify:**
-
-```bash
-for f in reviewer test-runner security-scanner orchestrator; do
-  test -s ".github/agents/$f.agent.md" \
-    && echo "PASS: $f" || echo "FAIL: $f missing or empty"
-done
-```
-
----
 
 ## Step 5 — Configure MCP servers
 
@@ -282,54 +244,83 @@ done
 {
   "mcpServers": {
     "github": {
-      "type": "local",
-      "command": "docker",
-      "args": [
-        "run", "-i", "--rm",
-        "-e", "GITHUB_PERSONAL_ACCESS_TOKEN",
-        "ghcr.io/github/github-mcp-server"
-      ],
-      "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "$GITHUB_TOKEN"
-      },
-      "tools": [
-        "get_file_contents",
-        "list_issues",
-        "get_pull_request",
-        "list_workflow_run_artifacts"
-      ]
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "headers": {
+        "X-MCP-Toolsets": "repos,issues,pull_requests,actions",
+        "X-MCP-Readonly": "true"
+      }
     }
   }
 }
 ```
 
-Every tool in that list is a read. Nothing here can comment, merge, approve, or push.
+### No token
+
+The remote GitHub MCP server authenticates with OAuth. You log in through the browser on first use; there is nothing to create, paste, rotate, or leak.
+
+This is the strongest version of the secrets rule. Lab 01 said never commit a credential. Here you go one better: **the safest credential is the one that does not exist.** Before writing a config that consumes a token, check whether the service offers OAuth instead — for the exam, and for real work.
+
+If you must run the server locally in Docker, a token is required. Reference it as an input, never inline:
+
+```json
+{
+  "mcpServers": {
+    "github": {
+      "type": "local",
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "-e", "GITHUB_PERSONAL_ACCESS_TOKEN", "ghcr.io/github/github-mcp-server"],
+      "env": { "GITHUB_PERSONAL_ACCESS_TOKEN": "${input:github_token}" }
+    }
+  }
+}
+```
+
+`${input:...}` prompts and stores the value outside the file. A shell-style `$GITHUB_TOKEN` is not interpolated here — it would be passed through as the literal string.
+
+### Where the restriction is actually enforced
+
+Two headers do the work, and they are not equivalent:
+
+| Header | Effect | Enforced where |
+| --- | --- | --- |
+| `X-MCP-Toolsets` | Only the named toolsets load | **Server side** |
+| `X-MCP-Readonly` | Every write tool is withheld, in every loaded toolset | **Server side** |
+
+That distinction is the point of this step. A client-side allow-list is a list the client agrees to honour. These headers mean the server never offers the write tools at all — an agent cannot call `merge_pull_request` because it was never given one to call.
+
+Appending `/readonly` to the URL does the same thing: `https://api.githubcopilot.com/mcp/x/issues/readonly`.
 
 ### The allow-list decision
 
-The `tools` array is the allow-list, and omission is denial. Compare it against the fuller design in [tools/mcp.allow-list.example.json](../tools/mcp.allow-list.example.json), which sorts operations into allowed, requires-approval, and denied.
-
-Then answer the question that file cannot answer on its own: **where is each category enforced?**
+Compare your config against the fuller design in [tools/mcp.allow-list.example.json](../tools/mcp.allow-list.example.json), which sorts operations into allowed, requires-approval, and denied. Then answer: **where is each category enforced?**
 
 | Category | Enforced by | Enforced where |
 | --- | --- | --- |
-| Allowed | The `tools` array in `.mcp.json` | Client, at tool-load time |
-| Denied | Omission from that array | Client, at tool-load time |
+| Allowed | `X-MCP-Toolsets` | Server, at connection time |
+| Denied | `X-MCP-Readonly`, or omission from the toolset list | Server, at connection time |
 | Requires approval | ? | ? |
 
-Fill in the last row. There is no `requiresHumanApproval` key in `.mcp.json` — the concept exists in your design document and nowhere in your configuration. Write down which control actually implements it. Lab 06 builds that control; this is the gap it fills.
+Fill in the last row. There is no approval concept anywhere in `.mcp.json` — it exists in your design document and in no configuration you have written. Name the control that actually implements it. Lab 06 builds it; this is the gap it fills.
 
 **Verify:**
 
 ```bash
 test -s .mcp.json && python3 -m json.tool .mcp.json > /dev/null \
   && echo "PASS: .mcp.json is valid JSON"
-grep -qE '"(merge_pull_request|create_or_update_file|delete_)' .mcp.json \
-  && echo "FAIL: write tool in the allow-list" \
-  || echo "PASS: read-only tool set"
+
+grep -qi "ghp_\|github_pat_\|ghs_" .mcp.json \
+  && echo "FAIL: a literal token is in the file" \
+  || echo "PASS: no literal token"
+
+python3 -c "
+import json; d=json.load(open('.mcp.json'))['mcpServers']['github']
+h=d.get('headers',{})
+print('PASS: read-only enforced server side' if h.get('X-MCP-Readonly')=='true' or '/readonly' in d.get('url','')
+      else 'CHECK: nothing prevents write tools from loading')"
 ```
 
-> **Never commit a token.** The `env` block references `$GITHUB_TOKEN` from your environment. If you paste a literal token here, secret scanning will flag it and you will be rotating a credential instead of doing Lab 03.
+**Behavioural test:** ask an agent to merge a pull request through MCP. It should report that no such tool is available — not that it declined. Those are different failures, and only the first is a boundary.
 
 ---
 
@@ -509,6 +500,7 @@ You completed the lab if you can explain:
 - Why the security-scanner has `execute` but not `edit`
 - Which part of your MCP allow-list is actually enforced, and which part is only documented
 - How an agentic workflow can create an issue while holding only read permissions
+- Why a server-side read-only header is a stronger control than a client-side tool list
 - Why an explicit image reference is an execution boundary and not just a deployment detail
 - What breaks first if the allowed CIDR is the only control protecting an unauthenticated service
 
@@ -525,7 +517,7 @@ You completed the lab if you can explain:
 
 ### MCP configuration traps
 
-- Custom agent YAML uses `mcp-servers`; JSON configuration uses `mcpServers`. The hyphen is the tell.
+- Custom agent YAML uses `mcp-servers`; repository `.mcp.json` uses `mcpServers`; **VS Code's `.vscode/mcp.json` uses plain `servers`**. Three spellings of the same idea, and the wrong one fails silently — the server simply never loads.
 - A local process has `command` and `args`. A remote HTTP or SSE server has a `url`.
 - A URL passed *inside* a local command's arguments does not make the transport remote. This is the distinction questions are built on.
 - Read access to issue context does not imply permission to merge pull requests. Allow-lists are per operation, not per server.
