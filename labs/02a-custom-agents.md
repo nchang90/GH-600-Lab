@@ -21,7 +21,7 @@ After completing this lab, you'll be able to:
 
 - Complete [Lab 01 — Prepare Agent Architecture](01-agent-architecture-sdlc.md).
 
-## Lab scenario
+## Scenario
 
 Your repository needs specialized agents for review, testing, security scanning, and coordination. You must ensure that each agent can perform its job without receiving unrelated write or execution capabilities.
 

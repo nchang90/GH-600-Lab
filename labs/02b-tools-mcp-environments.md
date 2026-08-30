@@ -24,7 +24,7 @@ After completing this lab, you'll be able to:
 - Complete [Lab 02a — Build Custom Agents](02a-custom-agents.md).
 - Retain the task brief from [Lab 01 — Prepare Agent Architecture](01-agent-architecture-sdlc.md).
 
-## Lab scenario
+## Scenario
 
 The custom agents now need external context and a repeatable execution environment. You must connect those capabilities without granting unnecessary write access or allowing the agent to redefine its own boundaries.
 
@@ -76,9 +76,11 @@ Ask an agent to merge a pull request through MCP. It should report that no merge
 
 **Update this file:** `agent-task-brief.md`
 
-Its **Execution boundaries** section needs all seven scopes. Six are there. Add the seventh:
+Its **Execution boundaries** section has six scope subsections. Add a seventh, **Infrastructure and secrets scope**:
 
 ```markdown
+### Infrastructure and secrets scope
+
 - Reach the cart API and MCP tools only through the endpoints named in this brief.
 - Do not change `allowedIpAddressRange`, ingress settings, or probe configuration in `infra/resources.bicep` as part of a task.
 - Do not replace `cartApiImage` with a moving tag; the deployed build must stay identifiable.

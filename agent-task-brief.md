@@ -22,13 +22,6 @@
 
 ## Execution boundaries
 
-- Reach the cart API and MCP tools only through the endpoints named in this brief.
-- Do not change `allowedIpAddressRange`, ingress settings, or probe configuration in `infra/resources.bicep` as part of a task.
-- Do not replace `cartApiImage` with a moving tag; the deployed build must stay identifiable.
-- Do not add environment variables or secrets to the container definition.
-- Treat `infra/` as sensitive, the same as `.github/` and `tools/`.
-- Do not modify an execution boundary to make the current task succeed.
-
 ### Repository scope
 
 - Work only in the repository named in this brief.
@@ -61,6 +54,15 @@
 
 - Use only the secrets and variables named in this brief.
 - Do not read, print, copy, or invent secret values.
+
+### Infrastructure and secrets scope
+
+- Reach the cart API and MCP tools only through the endpoints named in this brief.
+- Do not change `allowedIpAddressRange`, ingress settings, or probe configuration in `infra/resources.bicep` as part of a task.
+- Do not replace `cartApiImage` with a moving tag; the deployed build must stay identifiable.
+- Do not add environment variables or secrets to the container definition.
+- Treat `infra/` as sensitive, the same as `.github/` and `tools/`.
+- Do not modify an execution boundary to make the current task succeed.
 
 ## Approval gate
 

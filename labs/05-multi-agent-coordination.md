@@ -22,7 +22,7 @@ After completing this lab, you'll be able to:
 - Complete [Lab 02a — Build Custom Agents](02a-custom-agents.md).
 - Complete [Lab 04 — Evaluation, Error Analysis, and Tuning](04-evaluation-error-analysis-tuning.md).
 
-## Lab scenario
+## Scenario
 
 The loyalty discount pull request needs independent code, test, and security reviews.
 
@@ -84,6 +84,16 @@ Important controls:
 - `fail-fast: false` keeps other agents running after one fails.
 - Job permissions remain read-only.
 - `concurrency` cancels an outdated review of the same branch.
+
+### Why the concurrency group matters
+
+The group key `agent-review-${{ github.ref }}` is scoped per branch, not per matrix entry. That means:
+
+- Pushing two commits to the same PR branch cancels the older review run and starts a fresh one — you never evaluate stale code.
+- Reviews on different branches or PRs run concurrently against each other; they don't share a group and don't cancel one another.
+- Inside one run, the matrix jobs (`reviewer`, `test-runner`, `security-scanner`) still run in parallel with each other — `concurrency` controls run-to-run overlap, not job-to-job overlap within a run.
+
+If you widened the group key to something branch-independent (for example, a fixed string), every PR in the repository would queue behind a single concurrency slot. Keep the key scoped to the unit of work you want serialized — usually the ref or PR number.
 
 ## Exercise 3 — Consolidate the findings
 

@@ -22,7 +22,7 @@ After completing this lab, you'll be able to:
 - Complete [Lab 03 — Memory, State & Execution](03-memory-state-execution.md).
 - Use a fork where you can create branches and pull requests.
 
-## Lab scenario
+## Scenario
 
 An agent added loyalty discounts, changed the repository's test runner, removed validation, and edited its evaluation workflow. You must diagnose and correct the run.
 
@@ -148,7 +148,7 @@ Add one measurable rule to `.github/copilot-instructions.md`, such as:
 
 > Do not edit `.github/**` unless the task brief explicitly lists those paths in scope.
 
-Instructions guide behavior; tool restrictions, hooks, and branch protection enforce it.
+Instructions guide behavior; tool restrictions, hooks, and branch protection enforce it. [Lab 06](06-guardrails-accountability.md) covers configuring `preToolUse` hooks to block, not just discourage, out-of-scope edits.
 
 ### Check your work
 
@@ -204,6 +204,7 @@ Use links, commands, outputs, and file paths as evidence. Write `not configured`
 - A local pass is not evidence that CI will pass.
 - Model choice comes after task, instructions, tools, environment, repository state, and memory.
 - Evidence must be independently checkable.
+- A stale CI run is not evidence either — [Lab 05](05-multi-agent-coordination.md) shows how a `concurrency` group cancels outdated runs so evaluation always targets the latest commit.
 
 ## Summary
 

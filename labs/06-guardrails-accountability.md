@@ -22,9 +22,11 @@ After completing this lab, you'll be able to:
 
 - Complete [Lab 05 — Multi-Agent Coordination](05-multi-agent-coordination.md).
 
-## Lab scenario
+## Scenario
 
 Your agents can review changes, but the repository needs controls that prevent unsafe actions, preserve evidence, and remain current.
+
+**Reference:** [Using hooks with GitHub Copilot CLI](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/use-hooks) and the [hooks reference](https://docs.github.com/en/copilot/reference/hooks-reference).
 
 ## Exercise 1 — Configure hooks
 
@@ -34,6 +36,13 @@ Create `.github/hooks/pre-tool-policy.json`:
 {
   "version": 1,
   "hooks": {
+    "sessionStart": [
+      {
+        "type": "command",
+        "bash": ".github/hooks/scripts/session-log.sh",
+        "timeoutSec": 10
+      }
+    ],
     "preToolUse": [
       {
         "type": "command",
@@ -49,12 +58,31 @@ Create `.github/hooks/pre-tool-policy.json`:
         "bash": ".github/hooks/scripts/post-edit-check.sh",
         "timeoutSec": 15
       }
+    ],
+    "sessionEnd": [
+      {
+        "type": "command",
+        "bash": ".github/hooks/scripts/session-log.sh",
+        "timeoutSec": 10
+      }
     ]
   }
 }
 ```
 
-`preToolUse` can block an action. `postToolUse` runs after the action and can only report context.
+`preToolUse` is the only event here that can block an action. `postToolUse` runs after the action and can only report context. `sessionStart` and `sessionEnd` bracket the whole run and are useful for an audit trail, not for enforcement.
+
+Create `.github/hooks/scripts/session-log.sh`:
+
+```bash
+#!/bin/bash
+INPUT=$(cat)
+echo "$(date -u +%FT%TZ) session-event ${INPUT}" >> .github/hooks/session.log
+```
+
+```bash
+chmod +x .github/hooks/scripts/session-log.sh
+```
 
 ## Exercise 2 — Block dangerous commands
 
@@ -164,7 +192,7 @@ When retiring an agent, also update its owner, orchestrator delegation rules, wo
 ```bash
 python3 -m json.tool .github/hooks/pre-tool-policy.json > /dev/null
 
-for script in pre-tool-policy post-edit-check; do
+for script in pre-tool-policy post-edit-check session-log; do
   test -x ".github/hooks/scripts/$script.sh"
 done
 
@@ -173,20 +201,23 @@ echo '{"toolName":"bash","toolArgs":"git push origin main"}' \
 
 echo '{"toolName":"bash","toolArgs":"python3 -m unittest discover -s tests"}' \
   | .github/hooks/scripts/pre-tool-policy.sh
+
+echo '{"event":"sessionStart"}' | .github/hooks/scripts/session-log.sh
+grep -q "session-event" .github/hooks/session.log
 ```
 
-The first command must return `deny`; the second must return `allow`.
+The first command must return `deny`; the second must return `allow`; the session log must contain the recorded event.
 
 ## Check your understanding
 
 - Preventive controls act before damage; detective controls reveal what happened; corrective controls recover afterward.
-- `preToolUse` is the hook event that can block.
+- `preToolUse` is the hook event that can block; `postToolUse`, `sessionStart`, and `sessionEnd` can only observe and record.
 - `ask` becomes deny for a noninteractive cloud agent.
 - Hooks reduce unsafe actions but do not replace rulesets, branch protection, or protected environments.
 - Human approval matters only when the reviewer examines useful evidence.
 
 ## Summary
 
-You added preventive hooks, an edit audit signal, a PR evidence template, and a maintenance cadence for governed agent operation.
+You added preventive hooks, a session audit trail, an edit audit signal, a PR evidence template, and a maintenance cadence for governed agent operation.
 
 This completes the lab sequence.

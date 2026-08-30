@@ -21,7 +21,7 @@ After completing this lab, you'll be able to:
 - A GitHub account with access to GitHub Copilot in your IDE and Copilot CLI.
 - For the optional deployment, an Azure subscription and permission to create a resource group.
 
-## Lab scenario
+## Scenario
 
 Later labs assume that tests, workflows, and repository tools already work. You need to establish that baseline before adding agent instructions, custom agents, workflows, and guardrails.
 

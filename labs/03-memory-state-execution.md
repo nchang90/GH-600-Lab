@@ -23,7 +23,7 @@ After completing this lab, you'll be able to:
 - Complete `agent-task-brief.md`.
 - Open this repository in VS Code with Copilot Chat available.
 
-## Lab scenario
+## Scenario
 
 The loyalty-discount task moves from one agent session to another. You must preserve enough state for a fresh agent to continue safely without copying the entire conversation.
 
@@ -119,8 +119,10 @@ Complete the **State decisions** table for these facts:
 | Changed files | Git/current environment | Run `git status --short` |
 | Project Lantern | Original session context only | Resume the original conversation |
 | Credentials or tokens | Secure environment or secret store | Confirm availability without displaying the value |
----
 ```
+
+---
+
 ## Exercise 5 — Inspect Copilot Memory
 
 Open [Copilot Memory settings](https://github.com/settings/copilot/memory).
@@ -130,32 +132,6 @@ If Memory is available, inspect one entry and record its citation, whether it is
 Copilot Memory can expire or contain stale inferences. It is not the only home for a team rule or approval decision.
 
 ---
-
-## Check your work
-
-```bash
-if test -s agent-state-record.md; then
-  echo "PASS: agent-state-record.md exists and is not empty"
-else
-  echo "FAIL: agent-state-record.md is missing or empty"
-  exit 1
-fi
-
-for heading in \
-  "Initial session" \
-  "Resumed session" \
-  "Fresh-session handoff" \
-  "State decisions"; do
-  if grep -q "^## $heading$" agent-state-record.md; then
-    echo "PASS: $heading"
-  else
-    echo "FAIL: missing $heading"
-    exit 1
-  fi
-done
-```
-
-Review the record and confirm that every durable fact has a source and every environment-dependent fact has a revalidation method.
 
 ## Exam preparation
 

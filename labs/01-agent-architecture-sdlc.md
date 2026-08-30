@@ -24,7 +24,7 @@ After completing this lab, you'll be able to:
 - Complete [Lab 00 — Lab Preparation](00-lab-preparation.md).
 - Confirm that the repository test command passes.
 
-## Lab scenario
+## Scenario
 
 Your team is introducing coding agents into an existing cart application. Before an agent can make a safe change, it needs durable repository context, a bounded task brief, and an evidence trail that reviewers can inspect.
 
